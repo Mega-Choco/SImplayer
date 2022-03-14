@@ -6,23 +6,27 @@
         html,
         body {
             margin: 0px;
+            border: 0;
         }
 
-        .container {
+        #container {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        }
+
+        #canvas{
             width: 100%;
             height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #canvas{
-            border: red solid 1px;
         }
 
     </style>
 </head>
 
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+    </div>
 </body>
 <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
     integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
@@ -125,8 +129,8 @@
 
     //사용자 지정기준옵션
     let option = {};
-    option.width = 360;
-    option.height = 640;
+    option.width = 720;
+    option.height = 1280;
     option.baseFontSize = 20;
     option.FPS = 30;
     let baseAspectRatio = 0;
@@ -151,6 +155,7 @@
         currentSize: 0,
         fontInfo: ""
     };
+    var currentCanvasScale = 1;
 
     let textBox = {
         x: 0,
@@ -172,8 +177,9 @@
         deltaPrev = Date.now();
         ctx = $canvas.getContext("2d");
 
-        initializeCanvasSize();
-        recalaculatingSize();
+        //initializeCanvasSize();
+        //recalaculatingSize();
+        resizeGame();
         loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/EoSD_Chapter1.txt");
         translateScript(originScript);
 
@@ -214,8 +220,37 @@
 
     function recalculateObjectSize(){
         var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
-
     }
+
+    function gcd (a, b) {
+            return (b == 0) ? a : gcd (b, a%b);
+    }
+
+    function resizeGame() {
+    console.log("게임 리사이징");
+    var ratio = gcd(option.width,option.height);
+
+    var widthToHeight = (option.width/ratio) / (option.height/ratio);
+    var newWidth = window.innerWidth;
+    var newHeight = window.innerHeight;
+    var newWidthToHeight = newWidth / newHeight;
+    
+    if (newWidthToHeight > widthToHeight) {
+        newWidth = newHeight * widthToHeight;
+        $canvas.style.height = newHeight + 'px';
+        $canvas.style.width = newWidth + 'px';
+    } else {
+        newHeight = newWidth / widthToHeight;
+        $canvas.style.width = newWidth + 'px';
+        $canvas.style.height = newHeight + 'px';
+    }
+    
+    $canvas.style.marginTop = (-newHeight / 2) + 'px';
+    $canvas.style.marginLeft = (-newWidth / 2) + 'px';
+
+    currentCanvasScale = (option.width * 100)/$canvas.width;
+}
+
     function initializeCanvasSize(){
         $canvas.width = option.width;
         $canvas.height = option.height;
@@ -223,9 +258,9 @@
     }   
 
     window.onresize = function () {
-        clearTimeout(recalaculatingSize());
+        clearTimeout(resizeGame());
         doit = setTimeout(function () {
-            recalaculatingSize();
+            resizeGame();
         }, 100);
     };
 
@@ -263,16 +298,15 @@
     function draw() {
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
         ctx.save();
-
         Memory.objects.forEach(element => {
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
                 ctx.drawImage(
                     element.image, 
-                (element.position.x - (element.image.width/2)) * scaleCorrectionValue, 
-                (element.position.y - (element.image.height/2)),    
-                (element.width * element.scale.x)*scaleCorrectionValue, 
-                (element.image.height * element.scale.y)*scaleCorrectionValue);
+                (element.position.x - (element.image.width/2)) * currentCanvasScale, 
+                (element.position.y - (element.image.height/2)) * currentCanvasScale,    
+                (element.width * element.scale.x)*currentCanvasScale, 
+                (element.image.height * element.scale.y)*currentCanvasScale);
                 ctx.restore();
             }
         });
@@ -461,7 +495,7 @@
                 var paramRegex = /\((.*)\)/;
                 console.log(eachLine);
                 if(eachLine.length <= 0){
-                    console.log('its empty string, fuck');
+                    console.log('its empty string');
                     return;
                 }
                 var parameterSet = paramRegex.exec(eachLine)[1];
@@ -492,7 +526,7 @@
             var command = CommandList.get(codeLine.command);
             if (command == null) {
                 console.error("[" + codeLine.command + "]는 지원하지 않는 명령어 입니다.");
-            }
+            }   
             var excute = command.apply.bind(command, null, codeLine.parameters);
             excute();
         });
