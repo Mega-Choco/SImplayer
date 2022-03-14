@@ -135,8 +135,6 @@
     option.FPS = 30;
     let baseAspectRatio = 0;
 
-    //좌표, 스케일 보정값
-    let scaleCorrectionValue = 1;
 
     var stop = false;
     var frameCount = 0;
@@ -248,7 +246,7 @@
     $canvas.style.marginTop = (-newHeight / 2) + 'px';
     $canvas.style.marginLeft = (-newWidth / 2) + 'px';
 
-    currentCanvasScale = (option.width * 100)/$canvas.width;
+    currentCanvasScale = parseFloat($canvas.width/option.width);
 }
 
     function initializeCanvasSize(){
@@ -303,10 +301,10 @@
                 ctx.globalAlpha = element.opacity;
                 ctx.drawImage(
                     element.image, 
-                (element.position.x - (element.image.width/2)) * currentCanvasScale, 
-                (element.position.y - (element.image.height/2)) * currentCanvasScale,    
-                (element.width * element.scale.x)*currentCanvasScale, 
-                (element.image.height * element.scale.y)*currentCanvasScale);
+                (element.position.x - (element.image.width/2)) , 
+                (element.position.y - (element.image.height/2)) ,    
+                (element.width * element.scale.x), 
+                (element.image.height * element.scale.y));
                 ctx.restore();
             }
         });
