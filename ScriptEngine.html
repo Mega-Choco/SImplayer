@@ -10,16 +10,16 @@
         }
 
         #container {
-        position: absolute;
-        left: 50%;
-        top: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
         }
 
-        #canvas{
+        #canvas {
             width: 100%;
             height: 100%;
+            border: solid 1px red;
         }
-
     </style>
 </head>
 
@@ -44,8 +44,8 @@
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
             this.image = _image,
                 this.position = {},
-                this.position.x = _pos_X,
-                this.position.y = _pos_Y,
+                this.position.x = parseFloat(_pos_X),
+                this.position.y = parseFloat(_pos_Y),
                 this.position.z = _pos_Z,
                 this.scale = {},
                 this.scale.x = 1,
@@ -153,7 +153,7 @@
         currentSize: 0,
         fontInfo: ""
     };
-    var currentCanvasScale = 1;
+    var currentCanvasScale = { x: 1, y: 1 };
 
     let textBox = {
         x: 0,
@@ -208,52 +208,52 @@
     }
 
     function recalaculatingSize() {
-        console.log("리사이징 작동");
         $canvas.height = (window.innerWidth / baseAspectRatio);
         $canvas.width = ($canvas.height * baseAspectRatio);
-        scaleCorrectionValue = $canvas.width/option.width; 
+        scaleCorrectionValue = $canvas.width / option.width;
         settingTextbox(78, 10, 20);
         calculateFontSize();
     }
 
-    function recalculateObjectSize(){
+    function recalculateObjectSize() {
         var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
     }
 
-    function gcd (a, b) {
-            return (b == 0) ? a : gcd (b, a%b);
+    function gcd(a, b) {
+        return (b == 0) ? a : gcd(b, a % b);
     }
 
     function resizeGame() {
-    console.log("게임 리사이징");
-    var ratio = gcd(option.width,option.height);
+        var ratio = gcd(option.width, option.height);
 
-    var widthToHeight = (option.width/ratio) / (option.height/ratio);
-    var newWidth = window.innerWidth;
-    var newHeight = window.innerHeight;
-    var newWidthToHeight = newWidth / newHeight;
-    
-    if (newWidthToHeight > widthToHeight) {
-        newWidth = newHeight * widthToHeight;
-        $canvas.style.height = newHeight + 'px';
-        $canvas.style.width = newWidth + 'px';
-    } else {
-        newHeight = newWidth / widthToHeight;
-        $canvas.style.width = newWidth + 'px';
-        $canvas.style.height = newHeight + 'px';
+        var widthToHeight = (option.width / ratio) / (option.height / ratio);
+        var newWidth = window.innerWidth;
+        var newHeight = window.innerHeight;
+        var newWidthToHeight = newWidth / newHeight;
+
+        if (newWidthToHeight > widthToHeight) {
+            newWidth = newHeight * widthToHeight;
+            $canvas.style.height = newHeight + 'px';
+            $canvas.style.width = newWidth + 'px';
+        } else {
+            newHeight = newWidth / widthToHeight;
+            $canvas.style.width = newWidth + 'px';
+            $canvas.style.height = newHeight + 'px';
+        }
+
+        $canvas.style.marginTop = (-newHeight / 2) + 'px';
+        $canvas.style.marginLeft = (-newWidth / 2) + 'px';
+        $canvas.width = newWidth;
+        $canvas.height = newHeight;
+        currentCanvasScale.x =  parseFloat($canvas.width / option.width).toFixed(3);
+        currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
     }
-    
-    $canvas.style.marginTop = (-newHeight / 2) + 'px';
-    $canvas.style.marginLeft = (-newWidth / 2) + 'px';
 
-    currentCanvasScale = parseFloat($canvas.width/option.width);
-}
-
-    function initializeCanvasSize(){
+    function initializeCanvasSize() {
         $canvas.width = option.width;
         $canvas.height = option.height;
-        baseAspectRatio = option.width/option.height;
-    }   
+        baseAspectRatio = option.width / option.height;
+    }
 
     window.onresize = function () {
         clearTimeout(resizeGame());
@@ -288,7 +288,7 @@
     }
 
     function update(delta) {
-        Memory.task.forEach(task=>{
+        Memory.task.forEach(task => {
             task.update(delta);
         });
     }
@@ -297,14 +297,25 @@
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
         ctx.save();
         Memory.objects.forEach(element => {
+
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
+                var fixedWidth = element.image.width  * currentCanvasScale.x;
+                var fixedHeight = element.image.height  * currentCanvasScale.y;
                 ctx.drawImage(
-                    element.image, 
-                (element.position.x - (element.image.width/2)) , 
-                (element.position.y - (element.image.height/2)) ,    
-                (element.width * element.scale.x), 
-                (element.image.height * element.scale.y));
+                    element.image,
+                    ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
+                    ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
+                    fixedWidth,
+                    fixedHeight);
+                    
+                    //display pivot
+                    ctx.fillStyle = 'rgba(255,0,0,.5)';
+                    ctx.fillRect( ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
+                    ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
+                    fixedWidth,
+                    fixedHeight);
+                ctx.stroke();
                 ctx.restore();
             }
         });
@@ -365,8 +376,8 @@
     }
 
     ///////////////////////Commands Area/////////////////////////
-    function executeNext(){
-        Memory.task.forEach(task=>{
+    function executeNext() {
+        Memory.task.forEach(task => {
             task.skip();
         });
         Memory.task = [];
@@ -378,7 +389,7 @@
     }
 
     async function defineImage(name, sourceUrl) {
-        await loadingImage(sourceUrl).then(img=>Memory.images.set(name.replace(" ", ""), img));
+        await loadingImage(sourceUrl).then(img => Memory.images.set(name.replace(" ", ""), img));
     }
 
     async function loadingImage(src) {
@@ -406,9 +417,8 @@
             console.error("[" + imageName + "] 이미지는 존재하지 않습니다.");
         }
         var targetObj = already;
-        var convertedPos = convertPercentagePosition(pos_x, pos_y);
         if (already == null) {
-            targetObj = new GameObject(img, convertedPos.x, convertedPos.y);
+            targetObj = new GameObject(img, pos_x, pos_y);
         }
         targetObj.changeImage(img);
         Memory.objects.set(name, targetObj);
@@ -440,13 +450,13 @@
             task.targetObj.opacity = task.startOpt;
         }
         task.update = function (delta) {
-            if(this.targetObj.opacity >= this.endOpt){
+            if (this.targetObj.opacity >= this.endOpt) {
                 this.targetObj.opacity = this.endOpt
                 return;
             }
-            this.targetObj.opacity += this.speed*delta;
+            this.targetObj.opacity += this.speed * delta;
         }
-        task.skip = function (){
+        task.skip = function () {
             this.targetObj.opacity = this.endOpt;
         }
         task.start();
@@ -492,7 +502,7 @@
             splitedCodeLine.forEach(eachLine => {
                 var paramRegex = /\((.*)\)/;
                 console.log(eachLine);
-                if(eachLine.length <= 0){
+                if (eachLine.length <= 0) {
                     console.log('its empty string');
                     return;
                 }
@@ -524,7 +534,7 @@
             var command = CommandList.get(codeLine.command);
             if (command == null) {
                 console.error("[" + codeLine.command + "]는 지원하지 않는 명령어 입니다.");
-            }   
+            }
             var excute = command.apply.bind(command, null, codeLine.parameters);
             excute();
         });
@@ -534,7 +544,7 @@
         let imgCommands = new Array();
         defines.forEach(define => {
             var command = defineCommandList.get(define.command);
-            if(command == defineImage){
+            if (command == defineImage) {
                 imgCommands.push(define);
                 return;
             }
@@ -547,11 +557,11 @@
         await preloadingImages(imgCommands);
     }
 
-    async function preloadingImages(imgList){
-        for(var i=0;i<imgList.length;i++){
-            await defineImage(imgList[i].parameters[0],imgList[i].parameters[1]);
+    async function preloadingImages(imgList) {
+        for (var i = 0; i < imgList.length; i++) {
+            await defineImage(imgList[i].parameters[0], imgList[i].parameters[1]);
         }
     }
-</script>  
-<script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js" >
+</script>
+<script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js">
 </script>
