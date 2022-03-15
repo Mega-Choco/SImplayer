@@ -129,10 +129,15 @@
 
     //사용자 지정기준옵션
     let option = {};
-    option.width = 720;
-    option.height = 1280;
-    option.baseFontSize = 20;
-    option.FPS = 30;
+    option.width = 720; //기준 스크린 폭(px)
+    option.height = 1280; // 기준 스크린 높이 (px)
+    option.baseFontSize = 20; //폰트 크기()
+    option.FPS = 30; //게임 프레임 (60이하)
+    option.textAreaHeight = 360; //대화창 높이(아래부터 위로)
+    option.textboxPadding = 10; 
+    option.fontSize = 20;
+
+
     let baseAspectRatio = 0;
 
 
@@ -321,10 +326,15 @@
         });
 
         //Drawing textbox
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(textBox.x, textBox.y, textBox.width,
-            textBox.height);
-        ctx.font = fontSetting.fontInfo;
+        ctx.fillStyle = 'rgba(1,1,1,.5)';
+        var bbb =  (option.height - option.textAreaHeight) * currentCanvasScale.y;
+        var aaa = option.textAreaHeight * currentCanvasScale.y;
+        ctx.fillRect(0, 
+            (option.height - option.textAreaHeight) * currentCanvasScale.y,
+             $canvas.width,
+                option.textAreaHeight * currentCanvasScale.y);
+        ctx.font = option.fontSize;
+
         //Drawing text
         ctx.fillStyle = 'rgb(0,0,0)';
         textHandler.wrapText(ctx, textHandler.currentText,
@@ -450,9 +460,8 @@
             task.targetObj.opacity = task.startOpt;
         }
         task.update = function (delta) {
-            if (this.targetObj.opacity >= this.endOpt) {
-                this.targetObj.opacity = this.endOpt
-                return;
+            if(this.startOpt>this.endOpt){
+                this.speed *=-1;
             }
             this.targetObj.opacity += this.speed * delta;
         }
@@ -474,10 +483,6 @@
     }
 
     /////////////////////////Translator Area///////////////////////////////////////////////////////
-
-    //const Code = "DEF (char,sa,#FF0000)\nDEF (char,da,#0033ff)\nDEF (img, sa_1, https://realworld.blob.core.windows.net/misc-files/3YFQhIQGtkbfGiSIxjxFMA-character_boy_normal.png)\nDEF (img, sa_2, https://realworld.blob.core.windows.net/misc-files/Vs4eXuxISGneXsH4rjV_rw-%E1%84%8B%E1%85%AE%E1%84%91%E1%85%A1%E1%84%85%E1%85%AE%E1%84%91%E1%85%A1.jpg)\nPRINT (sa,\"Hello WORLD!\")\nSHOW (sa,sa_1,10,20,1)\n" +
-    //   "\nPRINT (sa,\"Hello again\")\nSHOW (sa,sa_2,null,null,null)\nPRINT (da, \"Oh hi! Hello\")";
-
 
     function loadingScriptFromLocalFile(file) {
         var rawFile = new XMLHttpRequest();
