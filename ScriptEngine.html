@@ -131,11 +131,12 @@
     let option = {};
     option.width = 720; //기준 스크린 폭(px)
     option.height = 1280; // 기준 스크린 높이 (px)
-    option.baseFontSize = 20; //폰트 크기()
     option.FPS = 30; //게임 프레임 (60이하)
-    option.textAreaHeight = 360; //대화창 높이(아래부터 위로)
-    option.textboxPadding = 10; 
+    option.baseFontSize = 20; //폰트 크기()
+    option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
+    option.textboxPadding = 30; //대화창 내부 패딩 
     option.fontSize = 20;
+    
 
 
     let baseAspectRatio = 0;
@@ -305,8 +306,8 @@
 
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
-                var fixedWidth = element.image.width  * currentCanvasScale.x;
-                var fixedHeight = element.image.height  * currentCanvasScale.y;
+                var fixedWidth = element.image.width * currentCanvasScale.x;
+                var fixedHeight = element.image.height * currentCanvasScale.y;
                 ctx.drawImage(
                     element.image,
                     ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
@@ -319,14 +320,14 @@
                     ctx.fillRect( ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
                     ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
                     fixedWidth,
-                    fixedHeight);
+                    fixedHeight); 
                 ctx.stroke();
                 ctx.restore();
             }
         });
 
         //Drawing textbox
-        ctx.fillStyle = 'rgba(1,1,1,.5)';
+        ctx.fillStyle = 'rgba(1,1,1,.8)';
         var bbb =  (option.height - option.textAreaHeight) * currentCanvasScale.y;
         var aaa = option.textAreaHeight * currentCanvasScale.y;
         ctx.fillRect(0, 
@@ -337,9 +338,12 @@
 
         //Drawing text
         ctx.fillStyle = 'rgb(0,0,0)';
-        textHandler.wrapText(ctx, textHandler.currentText,
-            textBox.padding_x,
-            textBox.y + textBox.padding_y + fontSetting.currentSize + fontSetting.currentSize, textBox.width - textBox.padding_x, fontSetting.currentSize);
+        textHandler.wrapText(ctx,
+         textHandler.currentText,
+        option.textboxPadding * currentCanvasScale.x,
+        ((option.height - option.textAreaHeight)+option.textboxPadding) * currentCanvasScale.y,
+           (option.width - option.textboxPadding)*currentCanvasScale.x,
+            20);
 
         ctx.stroke();
     }
@@ -565,8 +569,8 @@
     async function preloadingImages(imgList) {
         for (var i = 0; i < imgList.length; i++) {
             await defineImage(imgList[i].parameters[0], imgList[i].parameters[1]);
-        }
+        }   
     }
 </script>
 <script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js">
-</script>
+</script>   
