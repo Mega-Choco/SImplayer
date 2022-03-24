@@ -496,6 +496,38 @@
         target.scale.y = parseFloat(sacle_y);
     }
 
+    function moveObjectAsLerp(name, target_x,target_y,speed){
+        var task = {};
+        task.targetObj = null;
+        task.x = null;
+        task.y = null;
+        task.speed = null;
+        task.start = function () {
+            task.targetObj = Memory.objects.get(name);
+            task.startOpt = parseFloat(from);
+            task.endOpt = parseFloat(to);
+            task.speed = speed;
+            task.targetObj.opacity = task.startOpt;
+        }
+        task.lerp =  function (start, end, amt){
+            return start + (end - start) * amt;}
+
+        task.update = function (delta) {
+            this.target.position.x = this.lerp(this.target.position.x, this.x, (5 * deltaTime));
+
+            if (Math.abs(this.target.position.x - this.target_x) <= 0.1) {
+            this.target.position.x = this.target_x;
+            this.target.action = null;
+            }
+        }
+        task.skip = function () {
+            this.targetObj.position.x = this.x;
+            this.targetObj.position.y = this.y;
+        }
+        task.start();
+        Memory.task.push(task);
+    }
+
     /////////////////////////Translator Area///////////////////////////////////////////////////////
 
     function loadingScriptFromLocalFile(file) {
