@@ -136,29 +136,27 @@
     option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
     option.textboxPadding = 30; //대화창 내부 패딩 
     option.fontSize = 20;
-    
-
 
     let baseAspectRatio = 0;
-
-
-    var stop = false;
-    var frameCount = 0;
-    var $canvas = document.getElementById("canvas");
-    var $container = document.getElementsByClassName('container');
-    var ctx;
-    var fps, fpsInterval, startTime, now, then, elapsed
-    var deltaNow, deltaPrev;
+    
+    let stop = false;
+    let frameCount = 0;
+    let $canvas = document.getElementById("canvas");
+    let $container = document.getElementsByClassName('container');
+    let ctx;
+    let fps, fpsInterval, startTime, now, then, elapsed
+    let deltaNow, deltaPrev;
     let originScript = null;
     let consoleRoot = document.getElementById('console');
-    var fontBase = 720,                   // selected default width for canvas
+    /*var fontBase = 720,                   // selected default width for canvas
         fontSize = 32;                     // default size for font
     var fontSetting = {
         baseWidth: 720,
         baseSize: 24,
         currentSize: 0,
         fontInfo: ""
-    };
+    };*/
+    
     var currentCanvasScale = { x: 1, y: 1 };
 
     let textBox = {
@@ -184,7 +182,7 @@
         //initializeCanvasSize();
         //recalaculatingSize();
         resizeGame();
-        loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/EoSD_Chapter1.txt");
+        loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
         translateScript(originScript);
 
         start();
@@ -197,7 +195,6 @@
             height: srcHeight * ratio
         };
     };
-    var $container = $('.container');
 
     var resizeIt = function () {
         var size = calculateAspectRatioFit($canvas.width, $canvas.height, $container.width, $container.height);
@@ -269,8 +266,8 @@
     };
 
     async function start() {
-        ctx.font = fontSetting.fontInfo;
-        await preDefines()
+        ctx.font = "";
+        await preDefines();
         excuteCodeLines();
         loop();
     }
@@ -321,6 +318,7 @@
                     ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
                     fixedWidth,
                     fixedHeight); 
+                    
                 ctx.stroke();
                 ctx.restore();
             }
@@ -334,15 +332,17 @@
             (option.height - option.textAreaHeight) * currentCanvasScale.y,
              $canvas.width,
                 option.textAreaHeight * currentCanvasScale.y);
-        ctx.font = option.fontSize;
+
+    
+        ctx.font = "30px 굴림";
 
         //Drawing text
-        ctx.fillStyle = 'rgb(0,0,0)';
+        ctx.fillStyle = 'red';
         textHandler.wrapText(ctx,
          textHandler.currentText,
         option.textboxPadding * currentCanvasScale.x,
         ((option.height - option.textAreaHeight)+option.textboxPadding) * currentCanvasScale.y,
-           (option.width - option.textboxPadding)*currentCanvasScale.x,
+           (option.width - option.tezxtboxPadding)*currentCanvasScale.x,
             20);
 
         ctx.stroke();
@@ -350,8 +350,8 @@
 
     function convertPercentagePosition(_x, _y) {
         return {
-            x: ($canvas.width / 100) * _x,
-            y: ($canvas.height / 100) * _y
+            x: (option.width / 100) * _x,
+            y: (option.height / 100) * _y
         };
     }
 
@@ -427,6 +427,16 @@
     function showImage(name, imageName, pos_x, pos_y, pos_z) {
         var already = Memory.objects.get(name);
         var img = Memory.images.get(imageName);
+        var percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
+        
+        //Support Percentage Position
+        if(percentageRegex.test(pos_x.toString())){
+            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%','')),0).x;
+        }
+        if(percentageRegex.test(pos_y.toString())){
+            pos_y = convertPercentagePosition(0,parseFloat(pos_y.replace('%',''))).y;
+        }
+
         if (img == null) {
             console.error("[" + imageName + "] 이미지는 존재하지 않습니다.");
         }
@@ -436,7 +446,7 @@
         }
         targetObj.changeImage(img);
         Memory.objects.set(name, targetObj);
-        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")");
+        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")"); 
         return;
     }
 
