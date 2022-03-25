@@ -72,6 +72,25 @@
         }
     }
 
+    ////////////Helper/////////////
+    Math.AddVector2 = function (v1, v2){
+        return {
+            x: v1.x + v2.x,
+            y: v1.y + v2.y
+        }
+    }
+    Math.MultiVector2 = function (v,scalar){
+        return  {
+            x: v.x*scalar,
+            y: v.y*scalar
+        }
+    }
+    Math.LerpVector2 = function (v1, v2, amt){
+            return Math.AddVector2(Math.MultiVector2(v1,(1-amt)), Math.MultiVector2(v2,amt));
+    }
+
+    //////////////////////////////
+
     let defines = new Array();
     let defineCommandList = new Map([
         ['CHAR', defineCharacter],
@@ -84,7 +103,8 @@
         ['HIDE', hideImage],
         ['DISPOSE', disposeObject],
         ['FADE', fadeObject],
-        ['SCALE', setObjectScale]
+        ['SCALE', setObjectScale],  
+        ['MOVE', LerpMove]
     ]);
 
     let scriptHandler = {};
@@ -496,29 +516,29 @@
         target.scale.y = parseFloat(sacle_y);
     }
 
-    function moveObjectAsLerp(name, target_x,target_y,speed){
+    function LerpMove(name, target_x,target_y,speed){
         var task = {};
         task.targetObj = null;
-        task.x = null;
-        task.y = null;
+        task.target_pos ={};
+        task.target_pos.x = null;
+        task.target_pos.y = null;
         task.speed = null;
         task.start = function () {
             task.targetObj = Memory.objects.get(name);
-            task.startOpt = parseFloat(from);
-            task.endOpt = parseFloat(to);
-            task.speed = speed;
+            task.target_pos.x = parseFloat(target_x);
+            task.target_pos.y = parseFloat(target_y);
+            task.speed = parseInt(speed);
             task.targetObj.opacity = task.startOpt;
         }
-        task.lerp =  function (start, end, amt){
-            return start + (end - start) * amt;}
-
+ 
         task.update = function (delta) {
-            this.target.position.x = this.lerp(this.target.position.x, this.x, (5 * deltaTime));
-
-            if (Math.abs(this.target.position.x - this.target_x) <= 0.1) {
-            this.target.position.x = this.target_x;
-            this.target.action = null;
-            }
+            var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
+            this.targetObj.position.x = newPos.x;
+            this.targetObj.position.y = newPos.y;
+         //  if (Math.abs(this.target.position.x - this.target_x) <= 0.1) {
+         //  this.target.position.x = this.target_x;
+         //  this.target.action = null;
+         //  }
         }
         task.skip = function () {
             this.targetObj.position.x = this.x;
