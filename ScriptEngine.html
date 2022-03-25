@@ -7,6 +7,7 @@
         body {
             margin: 0px;
             border: 0;
+            background-color: black;
         }
 
         #container {
@@ -18,7 +19,7 @@
         #canvas {
             width: 100%;
             height: 100%;
-            border: solid 1px red;
+            background-color: white;;
         }
     </style>
 </head>
@@ -35,7 +36,7 @@
     class Character {
         constructor(_name, _color) {
             this.name = _name,
-                this.color = _color
+            this.color = _color
         }
     }
 
@@ -72,7 +73,7 @@
         }
     }
 
-    ////////////Helper/////////////
+    //////////// Math /////////////
     Math.AddVector2 = function (v1, v2){
         return {
             x: v1.x + v2.x,
@@ -89,22 +90,23 @@
             return Math.AddVector2(Math.MultiVector2(v1,(1-amt)), Math.MultiVector2(v2,amt));
     }
 
-    //////////////////////////////
+    ////////////////////////////////
 
     let defines = new Array();
-    let defineCommandList = new Map([
+    const defineCommandList = new Map([
         ['CHAR', defineCharacter],
         ['IMG', defineImage]
     ]);
 
-    let CommandList = new Map([
+    const CommandList = new Map([
         ['PRINT', print],
         ['SHOW', showImage],
         ['HIDE', hideImage],
         ['DISPOSE', disposeObject],
         ['FADE', fadeObject],
         ['SCALE', setObjectScale],  
-        ['MOVE', LerpMove]
+        ['MOVE', LerpMove],
+        ['SET_BG',setBackground]
     ]);
 
     let scriptHandler = {};
@@ -151,11 +153,12 @@
     let option = {};
     option.width = 720; //기준 스크린 폭(px)
     option.height = 1280; // 기준 스크린 높이 (px)
-    option.FPS = 30; //게임 프레임 (60이하)
+    option.FPS = 60; //게임 프레임 (60이하)
     option.baseFontSize = 20; //폰트 크기()
     option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
     option.textboxPadding = 30; //대화창 내부 패딩 
     option.fontSize = 20;
+    option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
 
     let baseAspectRatio = 0;
     
@@ -323,21 +326,24 @@
 
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
-                var fixedWidth = element.image.width * currentCanvasScale.x;
-                var fixedHeight = element.image.height * currentCanvasScale.y;
+                var fixedWidth = element.width * currentCanvasScale.x;
+                var fixedHeight = element.height * currentCanvasScale.y;
                 ctx.drawImage(
                     element.image,
-                    ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
-                    ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
+                    ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
+                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
                     fixedWidth,
                     fixedHeight);
                     
-                    //display pivot
+                //display image area
+                if(option.canvasDebug){
+
                     ctx.fillStyle = 'rgba(255,0,0,.5)';
-                    ctx.fillRect( ((element.position.x) - (element.image.width/2)) * currentCanvasScale.x,
-                    ((element.position.y - element.image.width/2)) * currentCanvasScale.x,
+                    ctx.fillRect( ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
+                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
                     fixedWidth,
                     fixedHeight); 
+                }
                     
                 ctx.stroke();
                 ctx.restore();
@@ -505,7 +511,13 @@
         task.start();
         Memory.task.push(task);
     }
-
+    function setBackground(imageName){
+        var centerPos = convertPercentagePosition(50,50);
+        var bgObject = new GameObject(Memory.images.get(imageName),
+        centerPos.x,centerPos.y,1,option.width,option.height);
+        bgObject.position.z = 0;
+        Memory.objects.set('BG',bgObject);
+    }
     function setObjectScale(name, scale_x, sacle_y) {
         var target = Memory.objects.get(name);
         if (target == null) {
@@ -516,6 +528,7 @@
         target.scale.y = parseFloat(sacle_y);
     }
 
+    //선형보간 이동
     function LerpMove(name, target_x,target_y,speed){
         var task = {};
         task.targetObj = null;
@@ -532,17 +545,35 @@
         }
  
         task.update = function (delta) {
+            
+
             var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
-            this.targetObj.position.x = newPos.x;
-            this.targetObj.position.y = newPos.y;
-         //  if (Math.abs(this.target.position.x - this.target_x) <= 0.1) {
-         //  this.target.position.x = this.target_x;
-         //  this.target.action = null;
-         //  }
+            if(this.targetObj.position.x != this.target_pos.x){
+                if(Math.abs((Math.abs(this.targetObj.position.x)-Math.abs(this.target_pos.x)))<=1)
+                {
+                    console.log("목표지점x 도달");
+                    this.targetObj.position.x = this.target_pos.x;
+                }else{
+                    console.log("x연산중");
+                    this.targetObj.position.x = newPos.x;
+                }
+            }
+
+            if(this.targetObj.position.y != this.target_pos.y){
+                if(Math.abs((Math.abs(this.targetObj.position.y)-Math.abs(this.target_pos.y)))<=1)
+                {
+                    console.log("목표지점y 도달");
+                    this.targetObj.position.y = this.target_pos.y;
+                }else{
+                    console.log("y연산중");
+                    this.targetObj.position.y = newPos.y;
+                }
+            }
         }
         task.skip = function () {
-            this.targetObj.position.x = this.x;
-            this.targetObj.position.y = this.y;
+            cosnole.log("보간이동 스킵!");
+            this.targetObj.position.x = this.target_pos.x;
+            this.targetObj.position.y = this.target_pos.y;
         }
         task.start();
         Memory.task.push(task);
