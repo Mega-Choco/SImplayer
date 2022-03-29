@@ -118,10 +118,11 @@
     };
 
     let textHandler = {};
+    textHandler.speaker = "";//[임시] 스피커이름 지정
     textHandler.currentText = "";
     textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
-        var line = '';
+        var line = ''; 
         for (var n = 0; n < words.length; n++) {
             var testLine = line + words[n] + ' ';
             var metrics = ctx.measureText(testLine);
@@ -195,15 +196,9 @@
     function init() {
         fps = option.FPS;
         fpsInterval = 1000 / fps;
-        then = Date.now();
-        startTime = then;
-        prev = then;
-        console.log(fpsInterval);
-        deltaPrev = Date.now();
+     
         ctx = $canvas.getContext("2d");
 
-        //initializeCanvasSize();
-        //recalaculatingSize();
         resizeGame();
         loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
         translateScript(originScript);
@@ -292,6 +287,11 @@
         ctx.font = "";
         await preDefines();
         excuteCodeLines();
+        then = Date.now();
+        startTime = then;
+        prev = then;
+        console.log(fpsInterval);
+        deltaPrev = Date.now();
         loop();
     }
 
@@ -323,7 +323,6 @@
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
         ctx.save();
         Memory.objects.forEach(element => {
-
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
                 var fixedWidth = element.width * currentCanvasScale.x;
@@ -344,7 +343,6 @@
                     fixedWidth,
                     fixedHeight); 
                 }
-                    
                 ctx.stroke();
                 ctx.restore();
             }
@@ -375,6 +373,12 @@
     }
 
     function convertPercentagePosition(_x, _y) {
+        if(CheckPercentageNumber(_x)){
+            _x = _x.replace('%','');
+        }
+        if(CheckPercentageNumber(_y)){
+            _y = _y.replace('%','');
+        }
         return {
             x: (option.width / 100) * _x,
             y: (option.height / 100) * _y
@@ -399,7 +403,7 @@
 
     document.addEventListener('keyup', event => {
         if (event.code === 'Space') {
-            excuteCodeLines();
+            executeNext();
         }
         else if (event.code == 'D') {
             dumpMemory();
@@ -414,9 +418,18 @@
         var dump = Memory;
         dumpedMemory.push(dump);
     }
+    ///////////////////////Tool Area/////////////////////////////
+    function CheckPercentageNumber(number){
+        const percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
+        if(typeof number === 'string'){
+            return percentageRegex.test(number.toString());
+        }
+        return false;
+    }
 
     ///////////////////////Commands Area/////////////////////////
     function executeNext() {
+        console.log("다음 실행");
         Memory.task.forEach(task => {
             task.skip();
         });
@@ -447,6 +460,7 @@
         var speaker = Memory.characters.get(name);
 
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
+        textHandler.speaker = Memory.characters.get(name).personalColor;
         textHandler.currentText = text;
     }
 
@@ -538,23 +552,19 @@
         task.speed = null;
         task.start = function () {
             task.targetObj = Memory.objects.get(name);
-            task.target_pos.x = parseFloat(target_x);
-            task.target_pos.y = parseFloat(target_y);
+            task.target_pos.x = parseFloat( CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x,0).x: target_x );
+            task.target_pos.y = parseFloat( CheckPercentageNumber(target_y) ? convertPercentagePosition(0,target_y).y: target_y )
             task.speed = parseInt(speed);
             task.targetObj.opacity = task.startOpt;
         }
  
         task.update = function (delta) {
-            
-
             var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
             if(this.targetObj.position.x != this.target_pos.x){
                 if(Math.abs((Math.abs(this.targetObj.position.x)-Math.abs(this.target_pos.x)))<=1)
                 {
-                    console.log("목표지점x 도달");
                     this.targetObj.position.x = this.target_pos.x;
                 }else{
-                    console.log("x연산중");
                     this.targetObj.position.x = newPos.x;
                 }
             }
@@ -562,16 +572,14 @@
             if(this.targetObj.position.y != this.target_pos.y){
                 if(Math.abs((Math.abs(this.targetObj.position.y)-Math.abs(this.target_pos.y)))<=1)
                 {
-                    console.log("목표지점y 도달");
                     this.targetObj.position.y = this.target_pos.y;
                 }else{
-                    console.log("y연산중");
                     this.targetObj.position.y = newPos.y;
                 }
             }
         }
         task.skip = function () {
-            cosnole.log("보간이동 스킵!");
+            console.log("태스크 스킵");
             this.targetObj.position.x = this.target_pos.x;
             this.targetObj.position.y = this.target_pos.y;
         }
@@ -626,7 +634,7 @@
     }
 
     function excuteCodeLines() {
-        console.log("코드라인 실행");
+        console.log("코드라인 실행");   
         var codeLines = scriptHandler.getNextScriptSection();
         if (codeLines == null) {
             //window.close();
