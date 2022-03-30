@@ -118,7 +118,7 @@
     };
 
     let textHandler = {};
-    textHandler.speaker = "";//[임시] 스피커이름 지정
+    textHandler.speakerColor = "";//[임시] 스피커이름 지정
     textHandler.currentText = "";
     textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
@@ -152,9 +152,9 @@
 
     //사용자 지정기준옵션
     let option = {};
-    option.width = 720; //기준 스크린 폭(px)
-    option.height = 1280; // 기준 스크린 높이 (px)
     option.FPS = 60; //게임 프레임 (60이하)
+    option.width = 720; //기준 스크린 폭(px)
+    option.height = 1280; // 기준 스크린 높이(px)
     option.baseFontSize = 20; //폰트 크기()
     option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
     option.textboxPadding = 30; //대화창 내부 패딩 
@@ -350,23 +350,22 @@
 
         //Drawing textbox
         ctx.fillStyle = 'rgba(1,1,1,.8)';
+
         var bbb =  (option.height - option.textAreaHeight) * currentCanvasScale.y;
         var aaa = option.textAreaHeight * currentCanvasScale.y;
         ctx.fillRect(0, 
-            (option.height - option.textAreaHeight) * currentCanvasScale.y,
-             $canvas.width,
-                option.textAreaHeight * currentCanvasScale.y);
-
-    
+        (option.height - option.textAreaHeight) * currentCanvasScale.y,
+        $canvas.width,
+        option.textAreaHeight * currentCanvasScale.y);
+        
         ctx.font = "30px 굴림";
-
         //Drawing text
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = textHandler.speakerColor;
         textHandler.wrapText(ctx,
          textHandler.currentText,
         option.textboxPadding * currentCanvasScale.x,
         ((option.height - option.textAreaHeight)+option.textboxPadding) * currentCanvasScale.y,
-           (option.width - option.tezxtboxPadding)*currentCanvasScale.x,
+           (option.width - option.textboxPadding)*currentCanvasScale.x,
             20);
 
         ctx.stroke();
@@ -411,7 +410,7 @@
     })
 
     document.addEventListener("touchstart", event => {
-        executeNext();
+        executeNext();  
     }, true);
 
     function dumpMemory() {
@@ -460,7 +459,7 @@
         var speaker = Memory.characters.get(name);
 
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
-        textHandler.speaker = Memory.characters.get(name).personalColor;
+        textHandler.speakerColor =speaker.color;
         textHandler.currentText = text;
     }
 
@@ -507,7 +506,7 @@
         task.endOpt = null;
         task.speed = null;
         task.start = function () {
-            task.targetObj = Memory.objects.get(name);
+            task.targetObj = Memory.objects.get(name);  
             task.startOpt = parseFloat(from);
             task.endOpt = parseFloat(to);
             task.speed = speed;
