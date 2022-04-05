@@ -21,6 +21,12 @@
             height: 100%;
             background-color: white;;
         }
+        @font-face {
+    font-family: 'Yeongdo-Rg';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/Yeongdo-Rg.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
     </style>
 </head>
 
@@ -118,7 +124,7 @@
     };
 
     let textHandler = {};
-    textHandler.speakerColor = "";//[임시] 스피커이름 지정
+    textHandler.speaker = null;
     textHandler.currentText = "";
     textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
@@ -158,8 +164,10 @@
     option.baseFontSize = 20; //폰트 크기()
     option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
     option.textboxPadding = 30; //대화창 내부 패딩 
-    option.fontSize = 20;
+    option.fontSize = 30;//텍스트 폰트 사이즈
+    option.nameSize = 24;//이름표시 폰트사이즈
     option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
+    
 
     let baseAspectRatio = 0;
     
@@ -173,13 +181,11 @@
     let originScript = null;
     let consoleRoot = document.getElementById('console');
     /*var fontBase = 720,                   // selected default width for canvas
-        fontSize = 32;                     // default size for font
+        fontSize = 32;                     // default size for font*/
     var fontSetting = {
-        baseWidth: 720,
-        baseSize: 24,
         currentSize: 0,
         fontInfo: ""
-    };*/
+    };
     
     var currentCanvasScale = { x: 1, y: 1 };
 
@@ -221,20 +227,20 @@
     };
 
     function calculateFontSize() {
-        var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
+        var ratio = option.fontSize / option.width;   // calc ratio
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
-        fontSetting.fontInfo = (size | 0) + 'px sans-serif'; // set font
+        fontSetting.fontInfo = (size | 0) + 'px Yeongdo-Rg'; // set font
     }
 
-    function recalaculatingSize() {
+   /* function recalaculatingSize() {
         $canvas.height = (window.innerWidth / baseAspectRatio);
         $canvas.width = ($canvas.height * baseAspectRatio);
         scaleCorrectionValue = $canvas.width / option.width;
         settingTextbox(78, 10, 20);
         calculateFontSize();
-    }
+    }*/
 
     function recalculateObjectSize() {
         var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
@@ -268,6 +274,8 @@
         $canvas.height = newHeight;
         currentCanvasScale.x =  parseFloat($canvas.width / option.width).toFixed(3);
         currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
+        
+        calculateFontSize();
     }
 
     function initializeCanvasSize() {
@@ -358,9 +366,10 @@
         $canvas.width,
         option.textAreaHeight * currentCanvasScale.y);
         
-        ctx.font = "30px 굴림";
+        ctx.font = fontSetting.fontInfo;
         //Drawing text
-        ctx.fillStyle = textHandler.speakerColor;
+        ctx.fillStyle = textHandler.speaker.color;
+        
         textHandler.wrapText(ctx,
          textHandler.currentText,
         option.textboxPadding * currentCanvasScale.x,
@@ -459,7 +468,7 @@
         var speaker = Memory.characters.get(name);
 
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
-        textHandler.speakerColor =speaker.color;
+        textHandler.speaker = speaker;
         textHandler.currentText = text;
     }
 
