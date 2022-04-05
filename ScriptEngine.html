@@ -46,6 +46,24 @@
         }
     }
 
+    class Task{
+        constructor(){
+            this.id = "";
+        }
+        start(){
+        }
+        update(delta){
+            
+        }
+        skip(){
+
+        }
+        end(){
+            console.log("[ID: "+this.id+"] 태스크가 끝났습니다.");
+            taskManager.disposeTask(this.id);
+        }
+    }
+    
     //출력용 오브젝트
     class GameObject {
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
@@ -146,10 +164,11 @@
     }
     /////////////////////////Resource Area/////////////////////////////
     let Memory = {};
+    let Resource = {};
     Memory.characters = new Map();
     Memory.images = new Map();
     Memory.objects = new Map();//Canvas 화면출력용 (GameObject Based)
-    Memory.task = new Array();//Update Tasks (need Deltatime)
+    Memory.task = new Map();//Update Tasks (need Deltatime)
 
     let dumpedMemory = new Array();
 
@@ -180,8 +199,8 @@
     let deltaNow, deltaPrev;
     let originScript = null;
     let consoleRoot = document.getElementById('console');
-    /*var fontBase = 720,                   // selected default width for canvas
-        fontSize = 32;                     // default size for font*/
+    let blockNext = false;
+
     var fontSetting = {
         currentSize: 0,
         fontInfo: ""
@@ -206,7 +225,7 @@
         ctx = $canvas.getContext("2d");
 
         resizeGame();
-        loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
+        loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
         translateScript(originScript);
 
         start();
@@ -220,30 +239,12 @@
         };
     };
 
-    var resizeIt = function () {
-        var size = calculateAspectRatioFit($canvas.width, $canvas.height, $container.width, $container.height);
-        $canvas.style.height = size.height;
-        $canvas.style.width = size.width;
-    };
-
     function calculateFontSize() {
         var ratio = option.fontSize / option.width;   // calc ratio
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
         fontSetting.fontInfo = (size | 0) + 'px Yeongdo-Rg'; // set font
-    }
-
-   /* function recalaculatingSize() {
-        $canvas.height = (window.innerWidth / baseAspectRatio);
-        $canvas.width = ($canvas.height * baseAspectRatio);
-        scaleCorrectionValue = $canvas.width / option.width;
-        settingTextbox(78, 10, 20);
-        calculateFontSize();
-    }*/
-
-    function recalculateObjectSize() {
-        var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
     }
 
     function gcd(a, b) {
@@ -310,7 +311,7 @@
 
         if (elapsed >= fpsInterval) {
             var prev = Date.now();
-            then = now - (elapsed % fpsInterval);
+            then = now - (elapsed % fpsInterval);   
 
             var sinceStart = now - startTime;
             var delta = (now - deltaPrev) / 1000;
@@ -322,9 +323,12 @@
     }
 
     function update(delta) {
-        Memory.task.forEach(task => {
-            task.update(delta);
-        });
+        if(Memory.task.size === 0 && !blockNext){
+            console.log("자동 다음실행");
+            executeNext();
+        }
+        taskManager.updateTasks(delta);
+        
     }
 
     function draw() {
@@ -411,7 +415,12 @@
 
     document.addEventListener('keyup', event => {
         if (event.code === 'Space') {
-            executeNext();
+            if(Memory.task.size === 0 && blockNext){
+                blockNext = false;
+            }
+            if(blockNext){
+                taskManager.skipTasks();
+            }
         }
         else if (event.code == 'D') {
             dumpMemory();
@@ -419,7 +428,7 @@
     })
 
     document.addEventListener("touchstart", event => {
-        executeNext();  
+        executeNext();      
     }, true);
 
     function dumpMemory() {
@@ -435,13 +444,45 @@
         return false;
     }
 
-    ///////////////////////Commands Area/////////////////////////
-    function executeNext() {
-        console.log("다음 실행");
+
+    //태스크 관리 (여길 통해서 등록하고 관리합시다.)
+    let taskManager = {};
+    taskManager.registTask = function(_task){
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < 7; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * 
+            charactersLength));
+        }
+        _task.id = result;
+
+
+        _task.start();
+        Memory.task.set(result,_task);
+
+        console.log("태스크 등록");
+    }   
+    taskManager.updateTasks = function(delta){
+        Memory.task.forEach(task => {
+            task.update(delta);
+        });
+    }
+    taskManager.skipTasks = function(){
+        console.log("태스크 전부 스킵");
         Memory.task.forEach(task => {
             task.skip();
         });
-        Memory.task = [];
+    }
+    taskManager.disposeTask = function(id){
+        console.log("태스크 완료 삭제");
+        Memory.task.delete(id);
+    }
+    
+
+    ///////////////////////Commands Area/////////////////////////
+    function executeNext() {
+        console.log("다음 실행");
         excuteCodeLines();
     }
 
@@ -470,6 +511,7 @@
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
         textHandler.speaker = speaker;
         textHandler.currentText = text;
+        blockNext = true;
     }
 
     function showImage(name, imageName, pos_x, pos_y, pos_z) {
@@ -552,7 +594,7 @@
 
     //선형보간 이동
     function LerpMove(name, target_x,target_y,speed){
-        var task = {};
+        var task = new Task();
         task.targetObj = null;
         task.target_pos ={};
         task.target_pos.x = null;
@@ -567,11 +609,18 @@
         }
  
         task.update = function (delta) {
+
+            if(this.targetObj.position.x == this.target_pos.x && this.targetObj.position.y == this.target_pos.y){
+                console.log("lerp Move 종료");
+                this.end();
+            }
+
             var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
             if(this.targetObj.position.x != this.target_pos.x){
                 if(Math.abs((Math.abs(this.targetObj.position.x)-Math.abs(this.target_pos.x)))<=1)
                 {
                     this.targetObj.position.x = this.target_pos.x;
+                    console.log("x 증가 끝");
                 }else{
                     this.targetObj.position.x = newPos.x;
                 }
@@ -581,28 +630,31 @@
                 if(Math.abs((Math.abs(this.targetObj.position.y)-Math.abs(this.target_pos.y)))<=1)
                 {
                     this.targetObj.position.y = this.target_pos.y;
+            
                 }else{
+                    
                     this.targetObj.position.y = newPos.y;
                 }
             }
+            
         }
         task.skip = function () {
             console.log("태스크 스킵");
             this.targetObj.position.x = this.target_pos.x;
             this.targetObj.position.y = this.target_pos.y;
         }
-        task.start();
-        Memory.task.push(task);
+        
+        taskManager.registTask(task);
     }
 
     /////////////////////////Translator Area///////////////////////////////////////////////////////
 
-    function loadingScriptFromLocalFile(file) {
+    function loadingScriptFromRemote(file) {
         var rawFile = new XMLHttpRequest();
         rawFile.open("GET", file, false);
         rawFile.onreadystatechange = function () {
             if (rawFile.readyState === 4) {
-                if (rawFile.status === 200 || rawFile.status == 0) {
+                if (rawFile.status === 200 || rawFile.status == 0) {                                            
                     var allText = rawFile.responseText;
                     originScript = allText;
                 }
