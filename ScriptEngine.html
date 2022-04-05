@@ -6,23 +6,34 @@
         html,
         body {
             margin: 0px;
+            border: 0;
+            background-color: black;
         }
 
-        .container {
+        #container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+        }
+
+        #canvas {
             width: 100%;
             height: 100%;
-            margin: 0;
-            padding: 0;
+            background-color: white;;
         }
-        #canvas{
-            border: red solid 1px;
-        }
-
+        @font-face {
+    font-family: 'Yeongdo-Rg';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/Yeongdo-Rg.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
     </style>
 </head>
 
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+    </div>
 </body>
 <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
     integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
@@ -31,7 +42,7 @@
     class Character {
         constructor(_name, _color) {
             this.name = _name,
-                this.color = _color
+            this.color = _color
         }
     }
 
@@ -40,8 +51,8 @@
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
             this.image = _image,
                 this.position = {},
-                this.position.x = _pos_X,
-                this.position.y = _pos_Y,
+                this.position.x = parseFloat(_pos_X),
+                this.position.y = parseFloat(_pos_Y),
                 this.position.z = _pos_Z,
                 this.scale = {},
                 this.scale.x = 1,
@@ -68,19 +79,40 @@
         }
     }
 
+    //////////// Math /////////////
+    Math.AddVector2 = function (v1, v2){
+        return {
+            x: v1.x + v2.x,
+            y: v1.y + v2.y
+        }
+    }
+    Math.MultiVector2 = function (v,scalar){
+        return  {
+            x: v.x*scalar,
+            y: v.y*scalar
+        }
+    }
+    Math.LerpVector2 = function (v1, v2, amt){
+            return Math.AddVector2(Math.MultiVector2(v1,(1-amt)), Math.MultiVector2(v2,amt));
+    }
+
+    ////////////////////////////////
+
     let defines = new Array();
-    let defineCommandList = new Map([
+    const defineCommandList = new Map([
         ['CHAR', defineCharacter],
         ['IMG', defineImage]
     ]);
 
-    let CommandList = new Map([
+    const CommandList = new Map([
         ['PRINT', print],
         ['SHOW', showImage],
         ['HIDE', hideImage],
         ['DISPOSE', disposeObject],
         ['FADE', fadeObject],
-        ['SCALE', setObjectScale]
+        ['SCALE', setObjectScale],  
+        ['MOVE', LerpMove],
+        ['SET_BG',setBackground]
     ]);
 
     let scriptHandler = {};
@@ -92,10 +124,11 @@
     };
 
     let textHandler = {};
+    textHandler.speaker = null;
     textHandler.currentText = "";
     textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
-        var line = '';
+        var line = ''; 
         for (var n = 0; n < words.length; n++) {
             var testLine = line + words[n] + ' ';
             var metrics = ctx.measureText(testLine);
@@ -125,32 +158,36 @@
 
     //사용자 지정기준옵션
     let option = {};
-    option.width = 360;
-    option.height = 640;
-    option.baseFontSize = 20;
-    option.FPS = 30;
+    option.FPS = 60; //게임 프레임 (60이하)
+    option.width = 720; //기준 스크린 폭(px)
+    option.height = 1280; // 기준 스크린 높이(px)
+    option.baseFontSize = 20; //폰트 크기()
+    option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
+    option.textboxPadding = 30; //대화창 내부 패딩 
+    option.fontSize = 30;//텍스트 폰트 사이즈
+    option.nameSize = 24;//이름표시 폰트사이즈
+    option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
+    
+
     let baseAspectRatio = 0;
-
-    //좌표, 스케일 보정값
-    let scaleCorrectionValue = 1;
-
-    var stop = false;
-    var frameCount = 0;
-    var $canvas = document.getElementById("canvas");
-    var $container = document.getElementsByClassName('container');
-    var ctx;
-    var fps, fpsInterval, startTime, now, then, elapsed
-    var deltaNow, deltaPrev;
+    
+    let stop = false;
+    let frameCount = 0;
+    let $canvas = document.getElementById("canvas");
+    let $container = document.getElementsByClassName('container');
+    let ctx;
+    let fps, fpsInterval, startTime, now, then, elapsed
+    let deltaNow, deltaPrev;
     let originScript = null;
     let consoleRoot = document.getElementById('console');
-    var fontBase = 720,                   // selected default width for canvas
-        fontSize = 32;                     // default size for font
+    /*var fontBase = 720,                   // selected default width for canvas
+        fontSize = 32;                     // default size for font*/
     var fontSetting = {
-        baseWidth: 720,
-        baseSize: 24,
         currentSize: 0,
         fontInfo: ""
     };
+    
+    var currentCanvasScale = { x: 1, y: 1 };
 
     let textBox = {
         x: 0,
@@ -165,16 +202,11 @@
     function init() {
         fps = option.FPS;
         fpsInterval = 1000 / fps;
-        then = Date.now();
-        startTime = then;
-        prev = then;
-        console.log(fpsInterval);
-        deltaPrev = Date.now();
+     
         ctx = $canvas.getContext("2d");
 
-        initializeCanvasSize();
-        recalaculatingSize();
-        loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/EoSD_Chapter1.txt");
+        resizeGame();
+        loadingScriptFromLocalFile("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
         translateScript(originScript);
 
         start();
@@ -187,7 +219,6 @@
             height: srcHeight * ratio
         };
     };
-    var $container = $('.container');
 
     var resizeIt = function () {
         var size = calculateAspectRatioFit($canvas.width, $canvas.height, $container.width, $container.height);
@@ -196,43 +227,79 @@
     };
 
     function calculateFontSize() {
-        var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
+        var ratio = option.fontSize / option.width;   // calc ratio
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
-        fontSetting.fontInfo = (size | 0) + 'px sans-serif'; // set font
+        fontSetting.fontInfo = (size | 0) + 'px Yeongdo-Rg'; // set font
     }
 
-    function recalaculatingSize() {
-        console.log("리사이징 작동");
+   /* function recalaculatingSize() {
         $canvas.height = (window.innerWidth / baseAspectRatio);
         $canvas.width = ($canvas.height * baseAspectRatio);
-        scaleCorrectionValue = $canvas.width/option.width; 
+        scaleCorrectionValue = $canvas.width / option.width;
         settingTextbox(78, 10, 20);
+        calculateFontSize();
+    }*/
+
+    function recalculateObjectSize() {
+        var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
+    }
+
+    function gcd(a, b) {
+        return (b == 0) ? a : gcd(b, a % b);
+    }
+
+    function resizeGame() {
+        var ratio = gcd(option.width, option.height);
+
+        var widthToHeight = (option.width / ratio) / (option.height / ratio);
+        var newWidth = window.innerWidth;
+        var newHeight = window.innerHeight;
+        var newWidthToHeight = newWidth / newHeight;
+
+        if (newWidthToHeight > widthToHeight) {
+            newWidth = newHeight * widthToHeight;
+            $canvas.style.height = newHeight + 'px';
+            $canvas.style.width = newWidth + 'px';
+        } else {
+            newHeight = newWidth / widthToHeight;
+            $canvas.style.width = newWidth + 'px';
+            $canvas.style.height = newHeight + 'px';
+        }
+
+        $canvas.style.marginTop = (-newHeight / 2) + 'px';
+        $canvas.style.marginLeft = (-newWidth / 2) + 'px';
+        $canvas.width = newWidth;
+        $canvas.height = newHeight;
+        currentCanvasScale.x =  parseFloat($canvas.width / option.width).toFixed(3);
+        currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
+        
         calculateFontSize();
     }
 
-    function recalculateObjectSize(){
-        var ratio = fontSetting.baseSize / fontSetting.baseWidth;   // calc ratio
-
-    }
-    function initializeCanvasSize(){
+    function initializeCanvasSize() {
         $canvas.width = option.width;
         $canvas.height = option.height;
-        baseAspectRatio = option.width/option.height;
-    }   
+        baseAspectRatio = option.width / option.height;
+    }
 
     window.onresize = function () {
-        clearTimeout(recalaculatingSize());
+        clearTimeout(resizeGame());
         doit = setTimeout(function () {
-            recalaculatingSize();
+            resizeGame();
         }, 100);
     };
 
     async function start() {
-        ctx.font = fontSetting.fontInfo;
-        await preDefines()
+        ctx.font = "";
+        await preDefines();
         excuteCodeLines();
+        then = Date.now();
+        startTime = then;
+        prev = then;
+        console.log(fpsInterval);
+        deltaPrev = Date.now();
         loop();
     }
 
@@ -255,7 +322,7 @@
     }
 
     function update(delta) {
-        Memory.task.forEach(task=>{
+        Memory.task.forEach(task => {
             task.update(delta);
         });
     }
@@ -263,38 +330,66 @@
     function draw() {
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
         ctx.save();
-
         Memory.objects.forEach(element => {
             if (element.isVisible) {
                 ctx.globalAlpha = element.opacity;
+                var fixedWidth = element.width * currentCanvasScale.x;
+                var fixedHeight = element.height * currentCanvasScale.y;
                 ctx.drawImage(
-                    element.image, 
-                (element.position.x - (element.image.width/2)) * scaleCorrectionValue, 
-                (element.position.y - (element.image.height/2)),    
-                (element.width * element.scale.x)*scaleCorrectionValue, 
-                (element.image.height * element.scale.y)*scaleCorrectionValue);
+                    element.image,
+                    ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
+                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
+                    fixedWidth,
+                    fixedHeight);
+                    
+                //display image area
+                if(option.canvasDebug){
+
+                    ctx.fillStyle = 'rgba(255,0,0,.5)';
+                    ctx.fillRect( ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
+                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
+                    fixedWidth,
+                    fixedHeight); 
+                }
+                ctx.stroke();
                 ctx.restore();
             }
         });
 
         //Drawing textbox
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(textBox.x, textBox.y, textBox.width,
-            textBox.height);
+        ctx.fillStyle = 'rgba(1,1,1,.8)';
+
+        var bbb =  (option.height - option.textAreaHeight) * currentCanvasScale.y;
+        var aaa = option.textAreaHeight * currentCanvasScale.y;
+        ctx.fillRect(0, 
+        (option.height - option.textAreaHeight) * currentCanvasScale.y,
+        $canvas.width,
+        option.textAreaHeight * currentCanvasScale.y);
+        
         ctx.font = fontSetting.fontInfo;
         //Drawing text
-        ctx.fillStyle = 'rgb(0,0,0)';
-        textHandler.wrapText(ctx, textHandler.currentText,
-            textBox.padding_x,
-            textBox.y + textBox.padding_y + fontSetting.currentSize + fontSetting.currentSize, textBox.width - textBox.padding_x, fontSetting.currentSize);
+        ctx.fillStyle = textHandler.speaker.color;
+        
+        textHandler.wrapText(ctx,
+         textHandler.currentText,
+        option.textboxPadding * currentCanvasScale.x,
+        ((option.height - option.textAreaHeight)+option.textboxPadding) * currentCanvasScale.y,
+           (option.width - option.textboxPadding)*currentCanvasScale.x,
+            20);
 
         ctx.stroke();
     }
 
     function convertPercentagePosition(_x, _y) {
+        if(CheckPercentageNumber(_x)){
+            _x = _x.replace('%','');
+        }
+        if(CheckPercentageNumber(_y)){
+            _y = _y.replace('%','');
+        }
         return {
-            x: ($canvas.width / 100) * _x,
-            y: ($canvas.height / 100) * _y
+            x: (option.width / 100) * _x,
+            y: (option.height / 100) * _y
         };
     }
 
@@ -316,7 +411,7 @@
 
     document.addEventListener('keyup', event => {
         if (event.code === 'Space') {
-            excuteCodeLines();
+            executeNext();
         }
         else if (event.code == 'D') {
             dumpMemory();
@@ -324,17 +419,26 @@
     })
 
     document.addEventListener("touchstart", event => {
-        executeNext();
+        executeNext();  
     }, true);
 
     function dumpMemory() {
         var dump = Memory;
         dumpedMemory.push(dump);
     }
+    ///////////////////////Tool Area/////////////////////////////
+    function CheckPercentageNumber(number){
+        const percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
+        if(typeof number === 'string'){
+            return percentageRegex.test(number.toString());
+        }
+        return false;
+    }
 
     ///////////////////////Commands Area/////////////////////////
-    function executeNext(){
-        Memory.task.forEach(task=>{
+    function executeNext() {
+        console.log("다음 실행");
+        Memory.task.forEach(task => {
             task.skip();
         });
         Memory.task = [];
@@ -346,7 +450,7 @@
     }
 
     async function defineImage(name, sourceUrl) {
-        await loadingImage(sourceUrl).then(img=>Memory.images.set(name.replace(" ", ""), img));
+        await loadingImage(sourceUrl).then(img => Memory.images.set(name.replace(" ", ""), img));
     }
 
     async function loadingImage(src) {
@@ -364,23 +468,33 @@
         var speaker = Memory.characters.get(name);
 
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
+        textHandler.speaker = speaker;
         textHandler.currentText = text;
     }
 
     function showImage(name, imageName, pos_x, pos_y, pos_z) {
         var already = Memory.objects.get(name);
         var img = Memory.images.get(imageName);
+        var percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
+        
+        //Support Percentage Position
+        if(percentageRegex.test(pos_x.toString())){
+            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%','')),0).x;
+        }
+        if(percentageRegex.test(pos_y.toString())){
+            pos_y = convertPercentagePosition(0,parseFloat(pos_y.replace('%',''))).y;
+        }
+
         if (img == null) {
             console.error("[" + imageName + "] 이미지는 존재하지 않습니다.");
         }
         var targetObj = already;
-        var convertedPos = convertPercentagePosition(pos_x, pos_y);
         if (already == null) {
-            targetObj = new GameObject(img, convertedPos.x, convertedPos.y);
+            targetObj = new GameObject(img, pos_x, pos_y);
         }
         targetObj.changeImage(img);
         Memory.objects.set(name, targetObj);
-        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")");
+        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")"); 
         return;
     }
 
@@ -401,26 +515,31 @@
         task.endOpt = null;
         task.speed = null;
         task.start = function () {
-            task.targetObj = Memory.objects.get(name);
+            task.targetObj = Memory.objects.get(name);  
             task.startOpt = parseFloat(from);
             task.endOpt = parseFloat(to);
             task.speed = speed;
             task.targetObj.opacity = task.startOpt;
         }
         task.update = function (delta) {
-            if(this.targetObj.opacity >= this.endOpt){
-                this.targetObj.opacity = this.endOpt
-                return;
+            if(this.startOpt>this.endOpt){
+                this.speed *=-1;
             }
-            this.targetObj.opacity += this.speed*delta;
+            this.targetObj.opacity += this.speed * delta;
         }
-        task.skip = function (){
+        task.skip = function () {
             this.targetObj.opacity = this.endOpt;
         }
         task.start();
         Memory.task.push(task);
     }
-
+    function setBackground(imageName){
+        var centerPos = convertPercentagePosition(50,50);
+        var bgObject = new GameObject(Memory.images.get(imageName),
+        centerPos.x,centerPos.y,1,option.width,option.height);
+        bgObject.position.z = 0;
+        Memory.objects.set('BG',bgObject);
+    }
     function setObjectScale(name, scale_x, sacle_y) {
         var target = Memory.objects.get(name);
         if (target == null) {
@@ -431,11 +550,52 @@
         target.scale.y = parseFloat(sacle_y);
     }
 
+    //선형보간 이동
+    function LerpMove(name, target_x,target_y,speed){
+        var task = {};
+        task.targetObj = null;
+        task.target_pos ={};
+        task.target_pos.x = null;
+        task.target_pos.y = null;
+        task.speed = null;
+        task.start = function () {
+            task.targetObj = Memory.objects.get(name);
+            task.target_pos.x = parseFloat( CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x,0).x: target_x );
+            task.target_pos.y = parseFloat( CheckPercentageNumber(target_y) ? convertPercentagePosition(0,target_y).y: target_y )
+            task.speed = parseInt(speed);
+            task.targetObj.opacity = task.startOpt;
+        }
+ 
+        task.update = function (delta) {
+            var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
+            if(this.targetObj.position.x != this.target_pos.x){
+                if(Math.abs((Math.abs(this.targetObj.position.x)-Math.abs(this.target_pos.x)))<=1)
+                {
+                    this.targetObj.position.x = this.target_pos.x;
+                }else{
+                    this.targetObj.position.x = newPos.x;
+                }
+            }
+
+            if(this.targetObj.position.y != this.target_pos.y){
+                if(Math.abs((Math.abs(this.targetObj.position.y)-Math.abs(this.target_pos.y)))<=1)
+                {
+                    this.targetObj.position.y = this.target_pos.y;
+                }else{
+                    this.targetObj.position.y = newPos.y;
+                }
+            }
+        }
+        task.skip = function () {
+            console.log("태스크 스킵");
+            this.targetObj.position.x = this.target_pos.x;
+            this.targetObj.position.y = this.target_pos.y;
+        }
+        task.start();
+        Memory.task.push(task);
+    }
+
     /////////////////////////Translator Area///////////////////////////////////////////////////////
-
-    //const Code = "DEF (char,sa,#FF0000)\nDEF (char,da,#0033ff)\nDEF (img, sa_1, https://realworld.blob.core.windows.net/misc-files/3YFQhIQGtkbfGiSIxjxFMA-character_boy_normal.png)\nDEF (img, sa_2, https://realworld.blob.core.windows.net/misc-files/Vs4eXuxISGneXsH4rjV_rw-%E1%84%8B%E1%85%AE%E1%84%91%E1%85%A1%E1%84%85%E1%85%AE%E1%84%91%E1%85%A1.jpg)\nPRINT (sa,\"Hello WORLD!\")\nSHOW (sa,sa_1,10,20,1)\n" +
-    //   "\nPRINT (sa,\"Hello again\")\nSHOW (sa,sa_2,null,null,null)\nPRINT (da, \"Oh hi! Hello\")";
-
 
     function loadingScriptFromLocalFile(file) {
         var rawFile = new XMLHttpRequest();
@@ -460,8 +620,8 @@
             splitedCodeLine.forEach(eachLine => {
                 var paramRegex = /\((.*)\)/;
                 console.log(eachLine);
-                if(eachLine.length <= 0){
-                    console.log('its empty string, fuck');
+                if (eachLine.length <= 0) {
+                    console.log('its empty string');
                     return;
                 }
                 var parameterSet = paramRegex.exec(eachLine)[1];
@@ -482,7 +642,7 @@
     }
 
     function excuteCodeLines() {
-        console.log("코드라인 실행");
+        console.log("코드라인 실행");   
         var codeLines = scriptHandler.getNextScriptSection();
         if (codeLines == null) {
             //window.close();
@@ -502,7 +662,7 @@
         let imgCommands = new Array();
         defines.forEach(define => {
             var command = defineCommandList.get(define.command);
-            if(command == defineImage){
+            if (command == defineImage) {
                 imgCommands.push(define);
                 return;
             }
@@ -515,11 +675,11 @@
         await preloadingImages(imgCommands);
     }
 
-    async function preloadingImages(imgList){
-        for(var i=0;i<imgList.length;i++){
-            await defineImage(imgList[i].parameters[0],imgList[i].parameters[1]);
-        }
+    async function preloadingImages(imgList) {
+        for (var i = 0; i < imgList.length; i++) {
+            await defineImage(imgList[i].parameters[0], imgList[i].parameters[1]);
+        }   
     }
-</script>  
-<script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js" >
 </script>
+<script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js">
+</script>   
