@@ -19,14 +19,17 @@
         #canvas {
             width: 100%;
             height: 100%;
-            background-color: white;;
+            background-color: white;
+            ;
         }
+
         @font-face {
-    font-family: 'Yeongdo-Rg';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/Yeongdo-Rg.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
+            font-family: 'NanumBarunGothic';
+            font-style: normal;
+            font-weight: 400;
+            src: url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.eot');
+            src: url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.eot?#iefix') format('embedded-opentype'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.woff') format('woff'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.ttf') format('truetype');
+        }
     </style>
 </head>
 
@@ -42,28 +45,33 @@
     class Character {
         constructor(_name, _color) {
             this.name = _name,
-            this.color = _color
+                this.color = _color
         }
     }
 
-    class Task{
-        constructor(){
+    class Task {
+        constructor() {
             this.id = "";
         }
-        start(){
+        start() {
         }
-        update(delta){
-            
+        update(delta) {
         }
-        skip(){
-
+        skip() {
         }
-        end(){
-            console.log("[ID: "+this.id+"] 태스크가 끝났습니다.");
+        end() {
+            console.log("[ID: " + this.id + "] 태스크가 끝났습니다.");
             taskManager.disposeTask(this.id);
         }
     }
-    
+
+    class Vector2 {
+        constructor(_x, _y) {
+            this.x = parseFloat(_x),
+            this.y = parseFloat(_y)
+        }
+    }
+
     //출력용 오브젝트
     class GameObject {
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
@@ -98,23 +106,57 @@
     }
 
     //////////// Math /////////////
-    Math.AddVector2 = function (v1, v2){
-        return {
-            x: v1.x + v2.x,
-            y: v1.y + v2.y
-        }
-    }
-    Math.MultiVector2 = function (v,scalar){
-        return  {
-            x: v.x*scalar,
-            y: v.y*scalar
-        }
-    }
-    Math.LerpVector2 = function (v1, v2, amt){
-            return Math.AddVector2(Math.MultiVector2(v1,(1-amt)), Math.MultiVector2(v2,amt));
+
+    //두 Vector2의 덧셈 입니다.
+    Math.AddVector2 = function (v1, v2) {
+        return new Vector2(
+            v1.x + v2.x,
+            v1.y + v2.y
+        );
     }
 
-    ////////////////////////////////
+    //두 Vector2의 뺄셈입니다.
+    Math.MinusVector2 = function (v1,v2){
+        return new Vector2(
+            v1.x-v2.x,
+            v1.y-v2.y
+        );
+    }
+
+    //Vector2의 상수의 곱 입니다.
+    Math.MultiVector2 = function (v, scalar) {
+        return new Vector2(
+            v.x * scalar,
+            v.y * scalar
+        );
+    } 
+    
+    //성능문제가 있을수도?
+    Math.Vector2Distance = function(a,b){
+        return Math.sqrt(Math.pow((b.x - a.x),2) + Math.pow((b.y - a.y),2));
+    }
+
+    //Vector2의 길이를 반환합니다.
+    Math.Vector2Magnitude = function(v){
+        return Math.sqrt((Math.pow(v.x,2)+Math.pow(v.y,2)));
+    }
+
+    //두 좌표간 직선이동입니다.
+    Math.Vector2MoveTowards = function(current, target, maxDistanceDelta){
+        var a = Math.MinusVector2(target,current);//vector2
+        var magnitude = Math.Vector2Magnitude(a);//float
+        if(magnitude <= maxDistanceDelta || magnitude == 0){
+            return target;
+        } 
+       
+        return Math.AddVector2(Math.MultiVector2(new Vector2(a.x/magnitude, a.y/magnitude),maxDistanceDelta),current);
+    }
+
+    Math.LerpVector2 = function (v1, v2, amt) {
+        return Math.AddVector2(Math.MultiVector2(v1, (1 - amt)), Math.MultiVector2(v2, amt));
+    }
+
+ //////////////////////////////
 
     let defines = new Array();
     const defineCommandList = new Map([
@@ -128,9 +170,10 @@
         ['HIDE', hideImage],
         ['DISPOSE', disposeObject],
         ['FADE', fadeObject],
-        ['SCALE', setObjectScale],  
-        ['MOVE', LerpMove],
-        ['SET_BG',setBackground]
+        ['SCALE', setObjectScale],
+        ['MOVE_LERP', lerpMove],
+        ['MOVE',moveToward],
+        ['SET_BG', setBackground]
     ]);
 
     let scriptHandler = {};
@@ -146,7 +189,7 @@
     textHandler.currentText = "";
     textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
-        var line = ''; 
+        var line = '';
         for (var n = 0; n < words.length; n++) {
             var testLine = line + words[n] + ' ';
             var metrics = ctx.measureText(testLine);
@@ -183,31 +226,29 @@
     option.baseFontSize = 20; //폰트 크기()
     option.textAreaHeight = 340; //대화창 높이(아래부터 위로)
     option.textboxPadding = 30; //대화창 내부 패딩 
-    option.fontSize = 30;//텍스트 폰트 사이즈
+    option.fontSize = 38;//텍스트 폰트 사이즈
     option.nameSize = 24;//이름표시 폰트사이즈
     option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
-    
+
 
     let baseAspectRatio = 0;
-    
     let stop = false;
     let frameCount = 0;
     let $canvas = document.getElementById("canvas");
     let $container = document.getElementsByClassName('container');
+    let consoleRoot = document.getElementById('console');
     let ctx;
     let fps, fpsInterval, startTime, now, then, elapsed
     let deltaNow, deltaPrev;
     let originScript = null;
-    let consoleRoot = document.getElementById('console');
     let blockNext = false;
 
     var fontSetting = {
         currentSize: 0,
         fontInfo: ""
     };
-    
-    var currentCanvasScale = { x: 1, y: 1 };
 
+    var currentCanvasScale = { x: 1, y: 1 };
     let textBox = {
         x: 0,
         y: 0,
@@ -221,7 +262,7 @@
     function init() {
         fps = option.FPS;
         fpsInterval = 1000 / fps;
-     
+
         ctx = $canvas.getContext("2d");
 
         resizeGame();
@@ -230,6 +271,98 @@
 
         start();
     }
+
+    async function start() {
+        ctx.font = "";
+        await preDefines();
+        excuteCodeLines();
+        then = Date.now();
+        startTime = then;
+        prev = then;
+        console.log(fpsInterval);
+        deltaPrev = Date.now();
+        loop();
+    }
+
+    function loop() {
+        requestAnimationFrame(loop);
+        now = Date.now();
+        elapsed = now - then;
+
+        if (elapsed >= fpsInterval) {
+            var prev = Date.now();
+            then = now - (elapsed % fpsInterval);
+
+            var sinceStart = now - startTime;
+            var delta = (now - deltaPrev) / 1000;
+            var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
+            deltaPrev = now;
+            update(delta);
+            draw();
+        }
+    }
+
+    function update(delta) {
+        if (Memory.task.size === 0 && !blockNext) {
+            executeNext();
+        }
+        taskManager.updateTasks(delta);
+
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, $canvas.width, $canvas.height);
+        ctx.save();
+        Memory.objects.forEach(element => {
+            if (element.isVisible) {
+                ctx.globalAlpha = element.opacity;
+                var fixedWidth = element.width * currentCanvasScale.x;
+                var fixedHeight = element.height * currentCanvasScale.y;
+                ctx.drawImage(
+                    element.image,
+                    ((element.position.x) - (element.width / 2)) * currentCanvasScale.x,
+                    ((element.position.y) - (element.height / 2)) * currentCanvasScale.y,
+                    fixedWidth,
+                    fixedHeight);
+
+                //display image area
+                if (option.canvasDebug) {
+
+                    ctx.fillStyle = 'rgba(255,0,0,.5)';
+                    ctx.fillRect(((element.position.x) - (element.width / 2)) * currentCanvasScale.x,
+                        ((element.position.y) - (element.height / 2)) * currentCanvasScale.y,
+                        fixedWidth,
+                        fixedHeight);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        });
+
+        //Drawing textbox
+        ctx.fillStyle = 'rgba(1,1,1,.8)';
+
+        var bbb = (option.height - option.textAreaHeight) * currentCanvasScale.y;
+        var aaa = option.textAreaHeight * currentCanvasScale.y;
+        ctx.fillRect(0,
+            (option.height - option.textAreaHeight) * currentCanvasScale.y,
+            $canvas.width,
+            option.textAreaHeight * currentCanvasScale.y);
+
+        ctx.font = fontSetting.fontInfo;
+        //Drawing text
+        ctx.fillStyle = textHandler.speaker.color;
+
+        textHandler.wrapText(ctx,
+            textHandler.currentText,
+            option.textboxPadding * currentCanvasScale.x,
+            ((option.height - option.textAreaHeight) + option.textboxPadding) * currentCanvasScale.y,
+            (option.width - option.textboxPadding) * currentCanvasScale.x,
+            20);
+
+        ctx.stroke();
+    }
+
     //////////////// Resizing canvas //////////////////
     var calculateAspectRatioFit = function (srcWidth, srcHeight, maxWidth, maxHeight) {
         var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
@@ -244,7 +377,7 @@
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
-        fontSetting.fontInfo = (size | 0) + 'px Yeongdo-Rg'; // set font
+        fontSetting.fontInfo = (size | 0) + 'px NanumBarunGothic'; // set font
     }
 
     function gcd(a, b) {
@@ -273,9 +406,9 @@
         $canvas.style.marginLeft = (-newWidth / 2) + 'px';
         $canvas.width = newWidth;
         $canvas.height = newHeight;
-        currentCanvasScale.x =  parseFloat($canvas.width / option.width).toFixed(3);
+        currentCanvasScale.x = parseFloat($canvas.width / option.width).toFixed(3);
         currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
-        
+
         calculateFontSize();
     }
 
@@ -292,104 +425,12 @@
         }, 100);
     };
 
-    async function start() {
-        ctx.font = "";
-        await preDefines();
-        excuteCodeLines();
-        then = Date.now();
-        startTime = then;
-        prev = then;
-        console.log(fpsInterval);
-        deltaPrev = Date.now();
-        loop();
-    }
-
-    function loop() {
-        requestAnimationFrame(loop);
-        now = Date.now();
-        elapsed = now - then;
-
-        if (elapsed >= fpsInterval) {
-            var prev = Date.now();
-            then = now - (elapsed % fpsInterval);   
-
-            var sinceStart = now - startTime;
-            var delta = (now - deltaPrev) / 1000;
-            var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
-            deltaPrev = now;
-            update(delta);
-            draw();
-        }
-    }
-
-    function update(delta) {
-        if(Memory.task.size === 0 && !blockNext){
-            console.log("자동 다음실행");
-            executeNext();
-        }
-        taskManager.updateTasks(delta);
-        
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, $canvas.width, $canvas.height);
-        ctx.save();
-        Memory.objects.forEach(element => {
-            if (element.isVisible) {
-                ctx.globalAlpha = element.opacity;
-                var fixedWidth = element.width * currentCanvasScale.x;
-                var fixedHeight = element.height * currentCanvasScale.y;
-                ctx.drawImage(
-                    element.image,
-                    ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
-                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
-                    fixedWidth,
-                    fixedHeight);
-                    
-                //display image area
-                if(option.canvasDebug){
-
-                    ctx.fillStyle = 'rgba(255,0,0,.5)';
-                    ctx.fillRect( ((element.position.x) - (element.width/2)) * currentCanvasScale.x,
-                    ((element.position.y) - (element.height/2)) * currentCanvasScale.y,
-                    fixedWidth,
-                    fixedHeight); 
-                }
-                ctx.stroke();
-                ctx.restore();
-            }
-        });
-
-        //Drawing textbox
-        ctx.fillStyle = 'rgba(1,1,1,.8)';
-
-        var bbb =  (option.height - option.textAreaHeight) * currentCanvasScale.y;
-        var aaa = option.textAreaHeight * currentCanvasScale.y;
-        ctx.fillRect(0, 
-        (option.height - option.textAreaHeight) * currentCanvasScale.y,
-        $canvas.width,
-        option.textAreaHeight * currentCanvasScale.y);
-        
-        ctx.font = fontSetting.fontInfo;
-        //Drawing text
-        ctx.fillStyle = textHandler.speaker.color;
-        
-        textHandler.wrapText(ctx,
-         textHandler.currentText,
-        option.textboxPadding * currentCanvasScale.x,
-        ((option.height - option.textAreaHeight)+option.textboxPadding) * currentCanvasScale.y,
-           (option.width - option.textboxPadding)*currentCanvasScale.x,
-            20);
-
-        ctx.stroke();
-    }
-
     function convertPercentagePosition(_x, _y) {
-        if(CheckPercentageNumber(_x)){
-            _x = _x.replace('%','');
+        if (CheckPercentageNumber(_x)) {
+            _x = _x.replace('%', '');
         }
-        if(CheckPercentageNumber(_y)){
-            _y = _y.replace('%','');
+        if (CheckPercentageNumber(_y)) {
+            _y = _y.replace('%', '');
         }
         return {
             x: (option.width / 100) * _x,
@@ -415,12 +456,12 @@
 
     document.addEventListener('keyup', event => {
         if (event.code === 'Space') {
-            if(Memory.task.size === 0 && blockNext){
-                blockNext = false;
-            }
-            if(blockNext){
+            if (Memory.task.size != 0) {
                 taskManager.skipTasks();
+                return;
             }
+            blockNext = false;
+
         }
         else if (event.code == 'D') {
             dumpMemory();
@@ -428,7 +469,11 @@
     })
 
     document.addEventListener("touchstart", event => {
-        executeNext();      
+        if (Memory.task.size != 0) {
+            taskManager.skipTasks();
+            return;
+        }
+        blockNext = false;
     }, true);
 
     function dumpMemory() {
@@ -436,9 +481,9 @@
         dumpedMemory.push(dump);
     }
     ///////////////////////Tool Area/////////////////////////////
-    function CheckPercentageNumber(number){
+    function CheckPercentageNumber(number) {
         const percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
-        if(typeof number === 'string'){
+        if (typeof number === 'string') {
             return percentageRegex.test(number.toString());
         }
         return false;
@@ -447,42 +492,41 @@
 
     //태스크 관리 (여길 통해서 등록하고 관리합시다.)
     let taskManager = {};
-    taskManager.registTask = function(_task){
-        var result           = '';
-        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    taskManager.registTask = function (_task) {
+        var result = '';
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         var charactersLength = characters.length;
-        for ( var i = 0; i < 7; i++ ) {
-            result += characters.charAt(Math.floor(Math.random() * 
-            charactersLength));
+        for (var i = 0; i < 7; i++) {
+            result += characters.charAt(Math.floor(Math.random() *
+                charactersLength));
         }
         _task.id = result;
 
 
         _task.start();
-        Memory.task.set(result,_task);
+        Memory.task.set(result, _task);
 
         console.log("태스크 등록");
-    }   
-    taskManager.updateTasks = function(delta){
+    }
+    taskManager.updateTasks = function (delta) {
         Memory.task.forEach(task => {
             task.update(delta);
         });
     }
-    taskManager.skipTasks = function(){
+    taskManager.skipTasks = function () {
         console.log("태스크 전부 스킵");
         Memory.task.forEach(task => {
             task.skip();
         });
     }
-    taskManager.disposeTask = function(id){
+    taskManager.disposeTask = function (id) {
         console.log("태스크 완료 삭제");
         Memory.task.delete(id);
     }
-    
+
 
     ///////////////////////Commands Area/////////////////////////
     function executeNext() {
-        console.log("다음 실행");
         excuteCodeLines();
     }
 
@@ -510,7 +554,7 @@
 
         debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
         textHandler.speaker = speaker;
-        textHandler.currentText = text;
+        textHandler.currentText = text.replace(/^\"|\"$/g, "");
         blockNext = true;
     }
 
@@ -518,13 +562,13 @@
         var already = Memory.objects.get(name);
         var img = Memory.images.get(imageName);
         var percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
-        
+
         //Support Percentage Position
-        if(percentageRegex.test(pos_x.toString())){
-            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%','')),0).x;
+        if (percentageRegex.test(pos_x.toString())) {
+            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%', '')), 0).x;
         }
-        if(percentageRegex.test(pos_y.toString())){
-            pos_y = convertPercentagePosition(0,parseFloat(pos_y.replace('%',''))).y;
+        if (percentageRegex.test(pos_y.toString())) {
+            pos_y = convertPercentagePosition(0, parseFloat(pos_y.replace('%', ''))).y;
         }
 
         if (img == null) {
@@ -536,7 +580,7 @@
         }
         targetObj.changeImage(img);
         Memory.objects.set(name, targetObj);
-        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")"); 
+        debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")");
         return;
     }
 
@@ -551,21 +595,21 @@
 
     function fadeObject(name, from, to, speed) {
         debugPrinter("fade object to name =" + name + " from = " + from + " to = " + to);
-        var task = {};
+        var task = new Task();
         task.targetObj = null;
         task.startOpt = null;
         task.endOpt = null;
         task.speed = null;
         task.start = function () {
-            task.targetObj = Memory.objects.get(name);  
+            task.targetObj = Memory.objects.get(name);
             task.startOpt = parseFloat(from);
             task.endOpt = parseFloat(to);
             task.speed = speed;
             task.targetObj.opacity = task.startOpt;
         }
         task.update = function (delta) {
-            if(this.startOpt>this.endOpt){
-                this.speed *=-1;
+            if (this.startOpt > this.endOpt) {
+                this.speed *= -1;
             }
             this.targetObj.opacity += this.speed * delta;
         }
@@ -575,12 +619,12 @@
         task.start();
         Memory.task.push(task);
     }
-    function setBackground(imageName){
-        var centerPos = convertPercentagePosition(50,50);
+    function setBackground(imageName) {
+        var centerPos = convertPercentagePosition(50, 50);
         var bgObject = new GameObject(Memory.images.get(imageName),
-        centerPos.x,centerPos.y,1,option.width,option.height);
+            centerPos.x, centerPos.y, 1, option.width, option.height);
         bgObject.position.z = 0;
-        Memory.objects.set('BG',bgObject);
+        Memory.objects.set('BG', bgObject);
     }
     function setObjectScale(name, scale_x, sacle_y) {
         var target = Memory.objects.get(name);
@@ -592,58 +636,84 @@
         target.scale.y = parseFloat(sacle_y);
     }
 
-    //선형보간 이동
-    function LerpMove(name, target_x,target_y,speed){
+    //일반이동
+    function moveToward(name, target_x, target_y, speed){
         var task = new Task();
         task.targetObj = null;
-        task.target_pos ={};
+        task.target_pos = {};
+        task.target_pos.x = null;
+        task.target_pos.y = null;
+        task.speed = null;
+        task.start = function(){
+            task.targetObj = Memory.objects.get(name);
+            task.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
+            task.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
+            task.speed = parseInt(speed)*40;
+         }
+         task.update = function(delta){
+            var newPos = Math.Vector2MoveTowards(new Vector2(this.targetObj.position.x, this.targetObj.position.y), this.target_pos, this.speed * delta);
+            console.log(newPos);
+            this.targetObj.position.x = newPos.x;
+            this.targetObj.position.y = newPos.y;
+            if(newPos == this.target_pos){
+                console.log("MoveToward 연산종료");
+                this.end();
+            }  
+         }
+         task.skip = function (){
+             this.targetObj.position.x = this.target_pos.x;
+             this.targetObj.position.y = this.target_pos.y;
+         }
+         taskManager.registTask(task);
+    }
+    //선형보간 이동
+    function lerpMove(name, target_x, target_y, speed) {
+        var task = new Task();
+        task.targetObj = null;
+        task.target_pos = {};
         task.target_pos.x = null;
         task.target_pos.y = null;
         task.speed = null;
         task.start = function () {
             task.targetObj = Memory.objects.get(name);
-            task.target_pos.x = parseFloat( CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x,0).x: target_x );
-            task.target_pos.y = parseFloat( CheckPercentageNumber(target_y) ? convertPercentagePosition(0,target_y).y: target_y )
+            task.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
+            task.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y)
             task.speed = parseInt(speed);
-            task.targetObj.opacity = task.startOpt;
         }
- 
+
         task.update = function (delta) {
 
-            if(this.targetObj.position.x == this.target_pos.x && this.targetObj.position.y == this.target_pos.y){
+            if (this.targetObj.position.x == this.target_pos.x && this.targetObj.position.y == this.target_pos.y) {
                 console.log("lerp Move 종료");
                 this.end();
             }
 
-            var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos,this.speed * delta);
-            if(this.targetObj.position.x != this.target_pos.x){
-                if(Math.abs((Math.abs(this.targetObj.position.x)-Math.abs(this.target_pos.x)))<=1)
-                {
+            var newPos = Math.LerpVector2(this.targetObj.position, this.target_pos, this.speed * delta);
+            if (this.targetObj.position.x != this.target_pos.x) {
+                if (Math.abs((Math.abs(this.targetObj.position.x) - Math.abs(this.target_pos.x))) <= 1) {
                     this.targetObj.position.x = this.target_pos.x;
                     console.log("x 증가 끝");
-                }else{
+                } else {
                     this.targetObj.position.x = newPos.x;
                 }
             }
 
-            if(this.targetObj.position.y != this.target_pos.y){
-                if(Math.abs((Math.abs(this.targetObj.position.y)-Math.abs(this.target_pos.y)))<=1)
-                {
+            if (this.targetObj.position.y != this.target_pos.y) {
+                if (Math.abs((Math.abs(this.targetObj.position.y) - Math.abs(this.target_pos.y))) <= 1) {
                     this.targetObj.position.y = this.target_pos.y;
-            
-                }else{
-                    
+
+                } else {
+
                     this.targetObj.position.y = newPos.y;
                 }
             }
-            
+
         }
         task.skip = function () {
-            console.log("태스크 스킵");
             this.targetObj.position.x = this.target_pos.x;
             this.targetObj.position.y = this.target_pos.y;
         }
-        
+
         taskManager.registTask(task);
     }
 
@@ -654,7 +724,7 @@
         rawFile.open("GET", file, false);
         rawFile.onreadystatechange = function () {
             if (rawFile.readyState === 4) {
-                if (rawFile.status === 200 || rawFile.status == 0) {                                            
+                if (rawFile.status === 200 || rawFile.status == 0) {
                     var allText = rawFile.responseText;
                     originScript = allText;
                 }
@@ -694,7 +764,7 @@
     }
 
     function excuteCodeLines() {
-        console.log("코드라인 실행");   
+        console.log("코드라인 실행");
         var codeLines = scriptHandler.getNextScriptSection();
         if (codeLines == null) {
             //window.close();
@@ -730,8 +800,8 @@
     async function preloadingImages(imgList) {
         for (var i = 0; i < imgList.length; i++) {
             await defineImage(imgList[i].parameters[0], imgList[i].parameters[1]);
-        }   
+        }
     }
 </script>
 <script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js">
-</script>   
+</script>
