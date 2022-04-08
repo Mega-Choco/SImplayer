@@ -76,10 +76,8 @@
     class GameObject {
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
             this.image = _image,
-                this.position = {},
-                this.position.x = parseFloat(_pos_X),
-                this.position.y = parseFloat(_pos_Y),
-                this.position.z = _pos_Z,
+                this.position = new Vector2(parseFloat(_pos_X),parseFloat(_pos_Y)),
+                this.z_index = _pos_Z,
                 this.scale = {},
                 this.scale.x = 1,
                 this.scale.y = 1,
@@ -315,6 +313,8 @@
         ctx.save();
         Memory.objects.forEach(element => {
             if (element.isVisible) {
+
+                //이미지 중심 기준 위치값 보정표시
                 ctx.globalAlpha = element.opacity;
                 var fixedWidth = element.width * currentCanvasScale.x;
                 var fixedHeight = element.height * currentCanvasScale.y;
@@ -325,7 +325,7 @@
                     fixedWidth,
                     fixedHeight);
 
-                //display image area
+                //디버그용 이미지 영역 표시
                 if (option.canvasDebug) {
 
                     ctx.fillStyle = 'rgba(255,0,0,.5)';
@@ -384,6 +384,7 @@
         return (b == 0) ? a : gcd(b, a % b);
     }
 
+    //고정 화면비 캔버스 크기조절
     function resizeGame() {
         var ratio = gcd(option.width, option.height);
 
@@ -492,7 +493,9 @@
 
     //태스크 관리 (여길 통해서 등록하고 관리합시다.)
     let taskManager = {};
+    //태스크 등록
     taskManager.registTask = function (_task) {
+        //고유 태스크 ID 생성하기
         var result = '';
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         var charactersLength = characters.length;
@@ -501,24 +504,24 @@
                 charactersLength));
         }
         _task.id = result;
-
-
         _task.start();
         Memory.task.set(result, _task);
-
         console.log("태스크 등록");
     }
+    //태스크 업데이트
     taskManager.updateTasks = function (delta) {
         Memory.task.forEach(task => {
             task.update(delta);
         });
     }
+    //태스크 일괄스킵
     taskManager.skipTasks = function () {
         console.log("태스크 전부 스킵");
         Memory.task.forEach(task => {
             task.skip();
         });
     }
+    //태스크 해제
     taskManager.disposeTask = function (id) {
         console.log("태스크 완료 삭제");
         Memory.task.delete(id);
@@ -623,7 +626,7 @@
         var centerPos = convertPercentagePosition(50, 50);
         var bgObject = new GameObject(Memory.images.get(imageName),
             centerPos.x, centerPos.y, 1, option.width, option.height);
-        bgObject.position.z = 0;
+        bgObject.z_index = 0;
         Memory.objects.set('BG', bgObject);
     }
     function setObjectScale(name, scale_x, sacle_y) {
@@ -683,7 +686,7 @@
 
         task.update = function (delta) {
 
-            if (this.targetObj.position.x == this.target_pos.x && this.targetObj.position.y == this.target_pos.y) {
+            if (this.targetObj.position == this.target_pos) {
                 console.log("lerp Move 종료");
                 this.end();
             }
