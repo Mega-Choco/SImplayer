@@ -185,7 +185,7 @@
     let textHandler = {};
     textHandler.speaker = null;
     textHandler.currentText = "";
-    textHandler.wrapText = function (context, text, x, y, maxWidth, lineHeight) {
+    textHandler.wrapText = function (text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
         var line = '';
         for (var n = 0; n < words.length; n++) {
@@ -227,6 +227,20 @@
     option.fontSize = 38;//텍스트 폰트 사이즈
     option.nameSize = 24;//이름표시 폰트사이즈
     option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
+
+    //텍스트영역 설정값
+    let textBoxSetting = {};
+    textBoxSetting.width = 680;//px
+    textBoxSetting.height = 320;//px
+    textBoxSetting.name_xPos = 20;//px (텍스트상자 내부의 상대위치)
+    textBoxSetting.name_yPos = 0;//px (텍스트상자 내부의 상대위치)
+    textBoxSetting.padding = {};
+    textBoxSetting.padding.top = 55;//px
+    textBoxSetting.padding.left = 60;//px
+    textBoxSetting.padding.right = 60;//px
+    textBoxSetting.padding.bottom = 20;//px;
+    textBoxSetting.margin = {};
+    textBoxSetting.margin.bottom = 10;//px
 
 
     let baseAspectRatio = 0;
@@ -310,7 +324,7 @@
 
     function draw() {
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
-        ctx.save();
+        ctx.save();//초기화 저장
         Memory.objects.forEach(element => {
             if (element.isVisible) {
 
@@ -340,25 +354,38 @@
         });
 
         //Drawing textbox
-        ctx.fillStyle = 'rgba(1,1,1,.8)';
+        ctx.fillStyle = 'green';
+        
+        var textBoxPos_x =  ((option.width/2) - (textBoxSetting.width/2)); 
+        var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
+        ctx.fillRect(
+            textBoxPos_x * currentCanvasScale.x,
+            textBoxPos_y * currentCanvasScale.y,
+            textBoxSetting.width * currentCanvasScale.x,
+            textBoxSetting.height * currentCanvasScale.y
+            );
+         
+        //Drawing Dialogue Area
+        ctx.fillStyle = 'red';  
+        var dialogueAreaPos_x =  (textBoxPos_x + textBoxSetting.padding.left) 
+        var dialogueAreaPos_y = (textBoxPos_y + textBoxSetting.padding.top)
+        ctx.fillRect(
+            dialogueAreaPos_x* currentCanvasScale.x,//x postion
+             dialogueAreaPos_y * currentCanvasScale.y,//y position
+            (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,//width
+            (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
+        );
 
-        var bbb = (option.height - option.textAreaHeight) * currentCanvasScale.y;
-        var aaa = option.textAreaHeight * currentCanvasScale.y;
-        ctx.fillRect(0,
-            (option.height - option.textAreaHeight) * currentCanvasScale.y,
-            $canvas.width,
-            option.textAreaHeight * currentCanvasScale.y);
-
+        ctx.fillStyle = 'white';
+        //Drawing Dialogue text
         ctx.font = fontSetting.fontInfo;
-        //Drawing text
-        ctx.fillStyle = textHandler.speaker.color;
-
-        textHandler.wrapText(ctx,
-            textHandler.currentText,
-            option.textboxPadding * currentCanvasScale.x,
-            ((option.height - option.textAreaHeight) + option.textboxPadding) * currentCanvasScale.y,
-            (option.width - option.textboxPadding) * currentCanvasScale.x,
-            20);
+        textHandler.wrapText(textHandler.currentText,
+            dialogueAreaPos_x * currentCanvasScale.x,
+            ((dialogueAreaPos_y) * currentCanvasScale.y)+fontSetting.currentSize,
+            (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
+            fontSetting.currentSize
+        );
+        
 
         ctx.stroke();
     }
@@ -377,13 +404,13 @@
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
-        fontSetting.fontInfo = (size | 0) + 'px NanumBarunGothic'; // set font
+        fontSetting.fontInfo =fontSetting.currentSize + 'px NanumBarunGothic'; // set font
     }
 
     function gcd(a, b) {
         return (b == 0) ? a : gcd(b, a % b);
     }
-
+    
     //고정 화면비 캔버스 크기조절
     function resizeGame() {
         var ratio = gcd(option.width, option.height);
@@ -490,7 +517,6 @@
         return false;
     }
 
-
     //태스크 관리 (여길 통해서 등록하고 관리합시다.)
     let taskManager = {};
     //태스크 등록
@@ -526,7 +552,6 @@
         console.log("태스크 완료 삭제");
         Memory.task.delete(id);
     }
-
 
     ///////////////////////Commands Area/////////////////////////
     function executeNext() {
