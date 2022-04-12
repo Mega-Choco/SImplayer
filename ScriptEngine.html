@@ -38,8 +38,7 @@
         <canvas id="canvas"></canvas>
     </div>
 </body>
-<script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
-    integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+
 <script>
     /////////////////////////Base Objects Area//////////////////////////////
     class Character {
@@ -171,7 +170,8 @@
         ['SCALE', setObjectScale],
         ['MOVE_LERP', lerpMove],
         ['MOVE',moveToward],
-        ['SET_BG', setBackground]
+        ['SET_BG', setBackground],
+        ['BOUNCE', bounceObject]
     ]);
 
     let scriptHandler = {};
@@ -219,6 +219,7 @@
     //사용자 지정기준옵션
     let option = {};
     option.FPS = 60; //게임 프레임 (60이하)
+
     option.width = 720; //기준 스크린 폭(px)
     option.height = 1280; // 기준 스크린 높이(px)
     option.baseFontSize = 20; //폰트 크기()
@@ -288,10 +289,10 @@
         ctx.font = "";
         await preDefines();
         excuteCodeLines();
+        console.log(fpsInterval);
         then = Date.now();
         startTime = then;
         prev = then;
-        console.log(fpsInterval);
         deltaPrev = Date.now();
         loop();
     }
@@ -301,8 +302,8 @@
         now = Date.now();
         elapsed = now - then;
 
+        var prev = Date.now();
         if (elapsed >= fpsInterval) {
-            var prev = Date.now();
             then = now - (elapsed % fpsInterval);
 
             var sinceStart = now - startTime;
@@ -317,9 +318,8 @@
     function update(delta) {
         if (Memory.task.size === 0 && !blockNext) {
             executeNext();
-        }
+        }   
         taskManager.updateTasks(delta);
-
     }
 
     function draw() {
@@ -354,6 +354,7 @@
         });
 
         //Drawing textbox
+        
         ctx.fillStyle = 'green';
         
         var textBoxPos_x =  ((option.width/2) - (textBoxSetting.width/2)); 
@@ -364,6 +365,7 @@
             textBoxSetting.width * currentCanvasScale.x,
             textBoxSetting.height * currentCanvasScale.y
             );
+           
          
         //Drawing Dialogue Area
         ctx.fillStyle = 'red';  
@@ -376,6 +378,15 @@
             (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
         );
 
+        if(textHandler.speaker != null){
+            ctx.fillStyle = textHandler.speaker.color;    
+            //Drawing Name on Textbox area
+            ctx.fillText(textHandler.speaker.name,
+            (textBoxPos_x+textBoxSetting.name_xPos) * currentCanvasScale.x,
+            ((textBoxPos_y + textBoxSetting.name_yPos)*currentCanvasScale.y)+fontSetting.currentSize);
+            
+        }
+        
         ctx.fillStyle = 'white';
         //Drawing Dialogue text
         ctx.font = fontSetting.fontInfo;
@@ -673,10 +684,10 @@
         task.target_pos.y = null;
         task.speed = null;
         task.start = function(){
-            task.targetObj = Memory.objects.get(name);
-            task.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
-            task.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
-            task.speed = parseInt(speed)*40;
+            this.targetObj = Memory.objects.get(name);
+            this.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
+            this.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
+            this.speed = parseInt(speed)*40;
          }
          task.update = function(delta){
             var newPos = Math.Vector2MoveTowards(new Vector2(this.targetObj.position.x, this.targetObj.position.y), this.target_pos, this.speed * delta);
@@ -744,6 +755,48 @@
 
         taskManager.registTask(task);
     }
+
+    //오브젝트 바운스 (example suprise) bouncing by sin curve
+    function bounceObject(name, height, speed, time){
+        var task = new Task();
+        task.targetObject = null;
+        task.targetHeight = null;
+        task.startPosition_y = null;
+        task.speed = null;
+        task.time = 3;
+        task.timeStore = null;
+
+        task.dur = null;
+        task.start = function (){
+            this.targetObject = Memory.objects.get(name);
+            this.targetHeight = parseFloat(this.targetObject.position.y + (height * 1));
+            this.startPosition_y = parseFloat(this.targetObject.position.y);
+            this.speed = parseInt(speed);
+            this.time = parseInt(time);
+            this.timeStore = 0;
+            this.dur = 0;
+        }
+        task.update = function (delta){
+            this.dur += delta*20;
+            var incrase =  ((height*-1)*Math.sin(this.dur));
+            
+            this.targetObject.position.y = this.targetObject.position.y + incrase ;
+            if(this.startPosition_y <= (this.targetObject.position.y + incrase)){
+                this.targetObject.position.y = this.startPosition_y;
+                this.timeStore += 1;
+                if(this.timeStore <= this.time){
+                    this.end();
+                }
+                this.dur = 0;
+            }
+        }
+        task.skip = function () {
+            this.targetObject.position.y = this.startPosition_y;
+        }
+
+        taskManager.registTask(task);
+    }
+
 
     /////////////////////////Translator Area///////////////////////////////////////////////////////
 
