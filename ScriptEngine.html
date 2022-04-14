@@ -355,28 +355,31 @@
 
         //Drawing textbox
         
-        ctx.fillStyle = 'green';
         
         var textBoxPos_x =  ((option.width/2) - (textBoxSetting.width/2)); 
         var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
-        ctx.fillRect(
-            textBoxPos_x * currentCanvasScale.x,
-            textBoxPos_y * currentCanvasScale.y,
-            textBoxSetting.width * currentCanvasScale.x,
-            textBoxSetting.height * currentCanvasScale.y
-            );
+        if(option.canvasDebug){
+            
+            ctx.fillStyle = 'green';
+            ctx.fillRect(
+                textBoxPos_x * currentCanvasScale.x,
+                textBoxPos_y * currentCanvasScale.y,
+                textBoxSetting.width * currentCanvasScale.x,
+                textBoxSetting.height * currentCanvasScale.y
+                );
+            ctx.fillStyle = 'red';  
+                ctx.fillRect(
+                    dialogueAreaPos_x* currentCanvasScale.x,//x postion
+                     dialogueAreaPos_y * currentCanvasScale.y,//y position
+                    (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,//width
+                    (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
+                );
+        }
            
          
         //Drawing Dialogue Area
-        ctx.fillStyle = 'red';  
         var dialogueAreaPos_x =  (textBoxPos_x + textBoxSetting.padding.left) 
         var dialogueAreaPos_y = (textBoxPos_y + textBoxSetting.padding.top)
-        ctx.fillRect(
-            dialogueAreaPos_x* currentCanvasScale.x,//x postion
-             dialogueAreaPos_y * currentCanvasScale.y,//y position
-            (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,//width
-            (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
-        );
 
         if(textHandler.speaker != null){
             ctx.fillStyle = textHandler.speaker.color;    
@@ -765,23 +768,25 @@
         task.speed = null;
         task.time = 3;
         task.timeStore = null;
+        task.direction = null;
 
         task.dur = null;
         task.start = function (){
             this.targetObject = Memory.objects.get(name);
-            this.targetHeight = parseFloat(this.targetObject.position.y + (height * 1));
+            this.targetHeight = parseFloat(this.targetObject.position.y + (height*1));
             this.startPosition_y = parseFloat(this.targetObject.position.y);
             this.speed = parseInt(speed);
             this.time = parseInt(time);
             this.timeStore = 0;
             this.dur = 0;
+            this.direction = height/Math.abs(height); // -1 is up, 1 is down
         }
         task.update = function (delta){
             this.dur += delta*20;
-            var incrase =  ((height*-1)*Math.sin(this.dur));
+            var incrase =  ((height) *Math.sin(this.dur));
             
             this.targetObject.position.y = this.targetObject.position.y + incrase ;
-            if(this.startPosition_y <= (this.targetObject.position.y + incrase)){
+            if(this.startPosition_y - (this.targetObject.position.y * this.direction) < 0){
                 this.targetObject.position.y = this.startPosition_y;
                 this.timeStore += 1;
                 if(this.timeStore <= this.time){
