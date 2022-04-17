@@ -759,48 +759,45 @@
     }
 
     //오브젝트 바운스 (example suprise) bouncing by sin curve
-    function bounceObject(name, height, speed, time){
+    function bounceObject(name, height, speed, duration){
         var task = new Task();
         task.targetObject = null;
         task.targetHeight = null;
         task.startPosition_y = null;
         task.speed = null;
-        task.time = 3;
-        task.timeStore = null;
+        task.duration = null;
+        task.durationStore = null;
         task.direction = null;
-
-        task.dur = null;
+        task.timeStore = null;
 
         task.start = function (){
             this.targetObject = Memory.objects.get(name);
-            this.targetHeight = this.targetObject.position.y + parseFloat(height);
+            this.targetHeight =parseFloat(height);
             this.startPosition_y = parseFloat(this.targetObject.position.y);
-            this.speed = parseInt(4);
-            this.time = 3;
+            this.speed = parseInt(speed);
+            this.duration = duration;
+            this.durationStore = 0;
             this.timeStore = 0;
-            this.dur = 0;
-            this.direction = height/Math.abs(height) ; // -1 is up, 1 is down
+            this.direction = this.targetHeight/Math.abs(this.targetHeight); // -1 is up, 1 is down
 
             console.log("시작 y: "+this.startPosition_y+", 목표: "+this.targetHeight);
+            console.log("direction = "+this.direction);
         }
         task.update = function (delta){
-            this.dur += delta*1;
-            var incrase =  ((height) *Math.sin(this.dur));
-            
-            var newPos = this.targetObject.position.y + incrase ;
+            var time = delta * this.speed;
+            this.timeStore += time;
+            var inc = Math.sin(this.timeStore) * this.targetHeight;
+            var detecting = Math.abs(inc);
+            this.targetObject.position.y = this.startPosition_y + inc;
 
-           // if((-this.startPosition_y * this.direction) + (this.targetObject.position.y * this.direction) <= 1){
-            if(this.direction ? newPos < this.startPosition_y : newPos > this.startPosition_y){
+            if(this.direction == -1 ? inc>=0:inc<=0){
+                this.timeStore = 0;
                 this.targetObject.position.y = this.startPosition_y;
-                this.timeStore += 1;
-                console.log("왕복확인,"+" 현재횟수:"+this.timeStore+", 목표횟수:"+this.time);
-                if(this.timeStore >= this.time){
+                this.durationStore += 1;
+                if(this.duration <= this.durationStore){
+                    console.log("스탑! 총횟수: " +this.durationStore);
                     this.end();
                 }
-                this.dur = 0;
-            }
-            else {
-                this.targetObject.position.y = newPos;
             }
         }
         task.skip = function () {
