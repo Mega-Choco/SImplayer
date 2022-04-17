@@ -694,7 +694,6 @@
          }
          task.update = function(delta){
             var newPos = Math.Vector2MoveTowards(new Vector2(this.targetObj.position.x, this.targetObj.position.y), this.target_pos, this.speed * delta);
-            console.log(newPos);
             this.targetObj.position.x = newPos.x;
             this.targetObj.position.y = newPos.y;
             if(newPos == this.target_pos){
@@ -771,28 +770,37 @@
         task.direction = null;
 
         task.dur = null;
+
         task.start = function (){
             this.targetObject = Memory.objects.get(name);
-            this.targetHeight = parseFloat(this.targetObject.position.y + (height*1));
+            this.targetHeight = this.targetObject.position.y + parseFloat(height);
             this.startPosition_y = parseFloat(this.targetObject.position.y);
-            this.speed = parseInt(speed);
-            this.time = parseInt(time);
+            this.speed = parseInt(4);
+            this.time = 3;
             this.timeStore = 0;
             this.dur = 0;
-            this.direction = height/Math.abs(height); // -1 is up, 1 is down
+            this.direction = height/Math.abs(height) ; // -1 is up, 1 is down
+
+            console.log("시작 y: "+this.startPosition_y+", 목표: "+this.targetHeight);
         }
         task.update = function (delta){
-            this.dur += delta*20;
+            this.dur += delta*1;
             var incrase =  ((height) *Math.sin(this.dur));
             
-            this.targetObject.position.y = this.targetObject.position.y + incrase ;
-            if(this.startPosition_y - (this.targetObject.position.y * this.direction) < 0){
+            var newPos = this.targetObject.position.y + incrase ;
+
+           // if((-this.startPosition_y * this.direction) + (this.targetObject.position.y * this.direction) <= 1){
+            if(this.direction ? newPos < this.startPosition_y : newPos > this.startPosition_y){
                 this.targetObject.position.y = this.startPosition_y;
                 this.timeStore += 1;
-                if(this.timeStore <= this.time){
+                console.log("왕복확인,"+" 현재횟수:"+this.timeStore+", 목표횟수:"+this.time);
+                if(this.timeStore >= this.time){
                     this.end();
                 }
                 this.dur = 0;
+            }
+            else {
+                this.targetObject.position.y = newPos;
             }
         }
         task.skip = function () {
