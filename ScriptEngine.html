@@ -67,7 +67,7 @@
     class Vector2 {
         constructor(_x, _y) {
             this.x = parseFloat(_x),
-            this.y = parseFloat(_y)
+                this.y = parseFloat(_y)
         }
     }
 
@@ -75,7 +75,7 @@
     class GameObject {
         constructor(_image, _pos_X, _pos_Y, _pos_Z, _width, _height) {
             this.image = _image,
-                this.position = new Vector2(parseFloat(_pos_X),parseFloat(_pos_Y)),
+                this.position = new Vector2(parseFloat(_pos_X), parseFloat(_pos_Y)),
                 this.z_index = _pos_Z,
                 this.scale = {},
                 this.scale.x = 1,
@@ -83,7 +83,8 @@
                 this.opacity = parseFloat(1),
                 this.width = (_width == null || _width == undefined) ? this.image.width : _width,
                 this.height = (_height == null || _height == undefined) ? this.image.height : _height,
-                this.isVisible = true
+                this.isVisible = true,
+                this.parent = null //부모 오브젝트
         }
         changeImage(source) {
             this.image = source;
@@ -113,10 +114,10 @@
     }
 
     //두 Vector2의 뺄셈입니다.
-    Math.MinusVector2 = function (v1,v2){
+    Math.MinusVector2 = function (v1, v2) {
         return new Vector2(
-            v1.x-v2.x,
-            v1.y-v2.y
+            v1.x - v2.x,
+            v1.y - v2.y
         );
     }
 
@@ -126,34 +127,34 @@
             v.x * scalar,
             v.y * scalar
         );
-    } 
-    
+    }
+
     //성능문제가 있을수도?
-    Math.Vector2Distance = function(a,b){
-        return Math.sqrt(Math.pow((b.x - a.x),2) + Math.pow((b.y - a.y),2));
+    Math.Vector2Distance = function (a, b) {
+        return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2));
     }
 
     //Vector2의 길이를 반환합니다.
-    Math.Vector2Magnitude = function(v){
-        return Math.sqrt((Math.pow(v.x,2)+Math.pow(v.y,2)));
+    Math.Vector2Magnitude = function (v) {
+        return Math.sqrt((Math.pow(v.x, 2) + Math.pow(v.y, 2)));
     }
 
     //두 좌표간 직선이동입니다.
-    Math.Vector2MoveTowards = function(current, target, maxDistanceDelta){
-        var a = Math.MinusVector2(target,current);//vector2
+    Math.Vector2MoveTowards = function (current, target, maxDistanceDelta) {
+        var a = Math.MinusVector2(target, current);//vector2
         var magnitude = Math.Vector2Magnitude(a);//float
-        if(magnitude <= maxDistanceDelta || magnitude == 0){
+        if (magnitude <= maxDistanceDelta || magnitude == 0) {
             return target;
-        } 
-       
-        return Math.AddVector2(Math.MultiVector2(new Vector2(a.x/magnitude, a.y/magnitude),maxDistanceDelta),current);
+        }
+
+        return Math.AddVector2(Math.MultiVector2(new Vector2(a.x / magnitude, a.y / magnitude), maxDistanceDelta), current);
     }
 
     Math.LerpVector2 = function (v1, v2, amt) {
         return Math.AddVector2(Math.MultiVector2(v1, (1 - amt)), Math.MultiVector2(v2, amt));
     }
 
- //////////////////////////////
+    //////////////////////////////
 
     let defines = new Array();
     const defineCommandList = new Map([
@@ -169,7 +170,7 @@
         ['FADE', fadeObject],
         ['SCALE', setObjectScale],
         ['MOVE_LERP', lerpMove],
-        ['MOVE',moveToward],
+        ['MOVE', moveToward],
         ['SET_BG', setBackground],
         ['BOUNCE', bounceObject]
     ]);
@@ -318,16 +319,16 @@
     function update(delta) {
         if (Memory.task.size === 0 && !blockNext) {
             executeNext();
-        }   
+        }
         taskManager.updateTasks(delta);
     }
 
     function draw() {
         ctx.clearRect(0, 0, $canvas.width, $canvas.height);
-        ctx.save();//초기화 저장
+        ctx.save();//save empty canvas status
+
         Memory.objects.forEach(element => {
             if (element.isVisible) {
-
                 //이미지 중심 기준 위치값 보정표시
                 ctx.globalAlpha = element.opacity;
                 var fixedWidth = element.width * currentCanvasScale.x;
@@ -354,53 +355,55 @@
         });
 
         //Drawing textbox
-        
-        
-        var textBoxPos_x =  ((option.width/2) - (textBoxSetting.width/2)); 
+        var textBoxPos_x = ((option.width / 2) - (textBoxSetting.width / 2));
         var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
-        if(option.canvasDebug){
-            
+        if (option.canvasDebug) {
+
             ctx.fillStyle = 'green';
             ctx.fillRect(
                 textBoxPos_x * currentCanvasScale.x,
                 textBoxPos_y * currentCanvasScale.y,
                 textBoxSetting.width * currentCanvasScale.x,
                 textBoxSetting.height * currentCanvasScale.y
-                );
-            ctx.fillStyle = 'red';  
-                ctx.fillRect(
-                    dialogueAreaPos_x* currentCanvasScale.x,//x postion
-                     dialogueAreaPos_y * currentCanvasScale.y,//y position
-                    (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,//width
-                    (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
-                );
+            );
+            ctx.fillStyle = 'red';
+            ctx.fillRect(
+                dialogueAreaPos_x * currentCanvasScale.x,//x postion
+                dialogueAreaPos_y * currentCanvasScale.y,//y position
+                (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,//width
+                (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
+            );
         }
-           
-         
+        ctx.fillStyle = 'rgba(0,0,0,.5)'
+        ctx.fillRect(
+            textBoxPos_x * currentCanvasScale.x,
+            textBoxPos_y * currentCanvasScale.y,
+            textBoxSetting.width * currentCanvasScale.x,
+            textBoxSetting.height * currentCanvasScale.y
+        );
+
         //Drawing Dialogue Area
-        var dialogueAreaPos_x =  (textBoxPos_x + textBoxSetting.padding.left) 
+        var dialogueAreaPos_x = (textBoxPos_x + textBoxSetting.padding.left)
         var dialogueAreaPos_y = (textBoxPos_y + textBoxSetting.padding.top)
 
-        if(textHandler.speaker != null){
-            ctx.fillStyle = textHandler.speaker.color;    
+        if (textHandler.speaker != null) {
+            ctx.fillStyle = textHandler.speaker.color;
             //Drawing Name on Textbox area
             ctx.fillText(textHandler.speaker.name,
-            (textBoxPos_x+textBoxSetting.name_xPos) * currentCanvasScale.x,
-            ((textBoxPos_y + textBoxSetting.name_yPos)*currentCanvasScale.y)+fontSetting.currentSize);
-            
+                (textBoxPos_x + textBoxSetting.name_xPos) * currentCanvasScale.x,
+                ((textBoxPos_y + textBoxSetting.name_yPos) * currentCanvasScale.y) + fontSetting.currentSize);
+
         }
-        
+
         ctx.fillStyle = 'white';
         //Drawing Dialogue text
         ctx.font = fontSetting.fontInfo;
         textHandler.wrapText(textHandler.currentText,
             dialogueAreaPos_x * currentCanvasScale.x,
-            ((dialogueAreaPos_y) * currentCanvasScale.y)+fontSetting.currentSize,
+            ((dialogueAreaPos_y) * currentCanvasScale.y) + fontSetting.currentSize,
             (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
             fontSetting.currentSize
         );
-        
-
         ctx.stroke();
     }
 
@@ -418,13 +421,13 @@
         var size = $canvas.width * ratio;
         fontSetting.currentSize = (size | 0);   // get font size based on current width
 
-        fontSetting.fontInfo =fontSetting.currentSize + 'px NanumBarunGothic'; // set font
+        fontSetting.fontInfo = fontSetting.currentSize + 'px NanumBarunGothic'; // set font
     }
 
     function gcd(a, b) {
         return (b == 0) ? a : gcd(b, a % b);
     }
-    
+
     //고정 화면비 캔버스 크기조절
     function resizeGame() {
         var ratio = gcd(option.width, option.height);
@@ -594,7 +597,7 @@
     function print(name, text) {
         var speaker = Memory.characters.get(name);
 
-        debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
+        //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
         textHandler.speaker = speaker;
         textHandler.currentText = text.replace(/^\"|\"$/g, "");
         blockNext = true;
@@ -679,34 +682,35 @@
     }
 
     //일반이동
-    function moveToward(name, target_x, target_y, speed){
+    function moveToward(name, target_x, target_y, speed) {
         var task = new Task();
         task.targetObj = null;
         task.target_pos = {};
         task.target_pos.x = null;
         task.target_pos.y = null;
         task.speed = null;
-        task.start = function(){
+        task.start = function () {
             this.targetObj = Memory.objects.get(name);
             this.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
             this.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
-            this.speed = parseInt(speed)*40;
-         }
-         task.update = function(delta){
+            this.speed = parseInt(speed) * 40;
+        }
+        task.update = function (delta) {
             var newPos = Math.Vector2MoveTowards(new Vector2(this.targetObj.position.x, this.targetObj.position.y), this.target_pos, this.speed * delta);
             this.targetObj.position.x = newPos.x;
             this.targetObj.position.y = newPos.y;
-            if(newPos == this.target_pos){
+            if (newPos == this.target_pos) {
                 console.log("MoveToward 연산종료");
                 this.end();
-            }  
-         }
-         task.skip = function (){
-             this.targetObj.position.x = this.target_pos.x;
-             this.targetObj.position.y = this.target_pos.y;
-         }
-         taskManager.registTask(task);
+            }
+        }
+        task.skip = function () {
+            this.targetObj.position.x = this.target_pos.x;
+            this.targetObj.position.y = this.target_pos.y;
+        }
+        taskManager.registTask(task);
     }
+
     //선형보간 이동
     function lerpMove(name, target_x, target_y, speed) {
         var task = new Task();
@@ -759,7 +763,7 @@
     }
 
     //오브젝트 바운스 (example suprise) bouncing by sin curve
-    function bounceObject(name, height, speed, duration){
+    function bounceObject(name, height, speed, duration) {
         var task = new Task();
         task.targetObject = null;
         task.targetHeight = null;
@@ -770,32 +774,28 @@
         task.direction = null;
         task.timeStore = null;
 
-        task.start = function (){
+        task.start = function () {
             this.targetObject = Memory.objects.get(name);
-            this.targetHeight =parseFloat(height);
+            this.targetHeight = parseFloat(height);
             this.startPosition_y = parseFloat(this.targetObject.position.y);
             this.speed = parseInt(speed);
             this.duration = duration;
             this.durationStore = 0;
             this.timeStore = 0;
-            this.direction = this.targetHeight/Math.abs(this.targetHeight); // -1 is up, 1 is down
-
-            console.log("시작 y: "+this.startPosition_y+", 목표: "+this.targetHeight);
-            console.log("direction = "+this.direction);
+            this.direction = this.targetHeight / Math.abs(this.targetHeight); // -1 is up, 1 is down
         }
-        task.update = function (delta){
+        task.update = function (delta) {
             var time = delta * this.speed;
             this.timeStore += time;
             var inc = Math.sin(this.timeStore) * this.targetHeight;
             var detecting = Math.abs(inc);
             this.targetObject.position.y = this.startPosition_y + inc;
 
-            if(this.direction == -1 ? inc>=0:inc<=0){
+            if (this.direction == -1 ? inc >= 0 : inc <= 0) {
                 this.timeStore = 0;
                 this.targetObject.position.y = this.startPosition_y;
                 this.durationStore += 1;
-                if(this.duration <= this.durationStore){
-                    console.log("스탑! 총횟수: " +this.durationStore);
+                if (this.duration <= this.durationStore) {
                     this.end();
                 }
             }
@@ -806,7 +806,6 @@
 
         taskManager.registTask(task);
     }
-
 
     /////////////////////////Translator Area///////////////////////////////////////////////////////
 
