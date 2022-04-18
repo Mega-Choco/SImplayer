@@ -172,7 +172,8 @@
         ['MOVE_LERP', lerpMove],
         ['MOVE', moveToward],
         ['SET_BG', setBackground],
-        ['BOUNCE', bounceObject]
+        ['BOUNCE', bounceObject],
+        ['SHAKE', shakeObject]
     ]);
 
     let scriptHandler = {};
@@ -803,10 +804,54 @@
         task.skip = function () {
             this.targetObject.position.y = this.startPosition_y;
         }
-
         taskManager.registTask(task);
     }
 
+    //오브젝트를 좌우로 흔듭니다.
+    function shakeObject(name, distance, speed, duration){
+        var task = new Task();
+        task.targetObject = null;
+        task.distance = null;
+        task.startX = null;
+        task.speed = null;
+        task.duration = null;
+        task.durationStore = null;
+        task.direction = null;
+        task.timeStore = null;
+
+        task.start = function () {
+            this.targetObject = Memory.objects.get(name);
+            this.distance = parseFloat(distance);
+            this.startX = parseFloat(this.targetObject.position.x);
+            this.speed = parseInt(speed);
+            this.duration = duration;
+            this.durationStore = 0;
+            this.timeStore = 0;
+            this.direction = this.distance / Math.abs(this.distance); // -1 is left, 1 is right
+
+        }
+        task.update = function (delta) {
+            var time = delta * this.speed;
+            this.timeStore += time;
+            var inc = Math.sin(this.timeStore) * this.distance;
+            var detecting = Math.abs(inc);
+            this.targetObject.position.x = this.startX + inc;
+            
+            if (this.direction == -1 ? inc >= 0 : inc <= 0) {
+                this.direction *= -1;
+                this.durationStore += 1;
+                 if (this.duration * 2 <= this.durationStore) {
+                     this.end();
+                 }
+            }
+        }
+        task.skip = function () {
+           this.targetObject.position.x = this.startX;
+           this.end();
+        }
+        taskManager.registTask(task);
+        
+    }
     /////////////////////////Translator Area///////////////////////////////////////////////////////
 
     function loadingScriptFromRemote(file) {
