@@ -187,6 +187,7 @@
     let textHandler = {};
     textHandler.speaker = null;
     textHandler.currentText = "";
+    
     textHandler.wrapText = function (text, x, y, maxWidth, lineHeight) {
         var words = text.split(' ');
         var line = '';
@@ -230,6 +231,7 @@
     option.fontSize = 38;//텍스트 폰트 사이즈
     option.nameSize = 24;//이름표시 폰트사이즈
     option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
+    option.dialogueSpeed = .2;
 
     //텍스트영역 설정값
     let textBoxSetting = {};
@@ -595,13 +597,36 @@
         });
     }
 
-    function print(name, text) {
+    function print(name, text, cycleTime) {
         var speaker = Memory.characters.get(name);
+
+        if(cycleTime == null){
+            cycleTime = option.dialogueSpeed;
+        }
 
         //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
         textHandler.speaker = speaker;
         textHandler.currentText = text.replace(/^\"|\"$/g, "");
+        textHandler.speaker = speaker;
         blockNext = true;
+
+        var task = new Task();
+        task.originText = text.replace(/^\"|\"$/g, "");
+        task.cycleTime = parseFloat(cycleTime);
+        task.timeStore = 0;
+        task.cursor = 0;
+        
+        task.update = function(delta){
+            this.timeStore += delta;
+            
+            if(this.timeStore >= this.cycleTime){
+                this.cursor += parseInt(this.timeStore / this.cycleTime)
+                console.log(parseInt(this.timeStore / this.cycleTime));
+                this.timeStore = 0;
+            }  
+        }
+        taskManager.registTask(task);
+        //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
     }
 
     function showImage(name, imageName, pos_x, pos_y, pos_z) {
