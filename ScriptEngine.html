@@ -77,7 +77,7 @@
             this.image = _image,
                 this.position = new Vector2(parseFloat(_pos_X), parseFloat(_pos_Y)),
                 this.z_index = _pos_Z,
-                this.scale = {},
+                this.scale = new Vector2(),
                 this.scale.x = 1,
                 this.scale.y = 1,
                 this.opacity = parseFloat(1),
@@ -231,7 +231,7 @@
     option.fontSize = 38;//텍스트 폰트 사이즈
     option.nameSize = 24;//이름표시 폰트사이즈
     option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
-    option.dialogueSpeed = .2;
+    option.dialogueSpeed = 0.07;
 
     //텍스트영역 설정값
     let textBoxSetting = {};
@@ -283,7 +283,7 @@
         ctx = $canvas.getContext("2d");
 
         resizeGame();
-        loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
+        loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/UnityTest.txt");
         translateScript(originScript);
 
         start();
@@ -332,25 +332,31 @@
 
         Memory.objects.forEach(element => {
             if (element.isVisible) {
+                
                 //이미지 중심 기준 위치값 보정표시
                 ctx.globalAlpha = element.opacity;
-                var fixedWidth = element.width * currentCanvasScale.x;
-                var fixedHeight = element.height * currentCanvasScale.y;
+                var fixedWidth = element.width * element.scale.x;
+                var fixedHeight = element.height * element.scale.y;
+                var flipX = element.scale.x > 0 ? 1:-1;
+                var flipY = element.scale.y > 0 ? 1:-1;
+                
                 ctx.drawImage(
                     element.image,
-                    ((element.position.x) - (element.width / 2)) * currentCanvasScale.x,
-                    ((element.position.y) - (element.height / 2)) * currentCanvasScale.y,
-                    fixedWidth,
-                    fixedHeight);
-
-                //디버그용 이미지 영역 표시
+                    ((element.position.x) - (fixedWidth / 2)) * currentCanvasScale.x,
+                    ((element.position.y) - (fixedHeight / 2)) * currentCanvasScale.y,
+                    fixedWidth * currentCanvasScale.x ,
+                    fixedHeight * currentCanvasScale.y);
+                    
+                    //디버그용 이미지 영역 표시
+                    
                 if (option.canvasDebug) {
 
                     ctx.fillStyle = 'rgba(255,0,0,.5)';
-                    ctx.fillRect(((element.position.x) - (element.width / 2)) * currentCanvasScale.x,
-                        ((element.position.y) - (element.height / 2)) * currentCanvasScale.y,
-                        fixedWidth,
-                        fixedHeight);
+                    ctx.fillRect(
+                        ((element.position.x) - (fixedWidth / 2)) * currentCanvasScale.x,
+                    ((element.position.y) - (fixedHeight / 2)) * currentCanvasScale.y,
+                    fixedWidth * currentCanvasScale.x,
+                    fixedHeight * currentCanvasScale.y);
                 }
                 ctx.stroke();
                 ctx.restore();
@@ -377,7 +383,7 @@
                 (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
             );
         }
-        ctx.fillStyle = 'rgba(0,0,0,.5)'
+        ctx.fillStyle = 'rgba(0,0,0,.75)'
         ctx.fillRect(
             textBoxPos_x * currentCanvasScale.x,
             textBoxPos_y * currentCanvasScale.y,
@@ -511,8 +517,12 @@
             blockNext = false;
 
         }
-        else if (event.code == 'D') {
+        if (event.code == 'D') {
             dumpMemory();
+        }
+        if (event.code == 'Q'){
+            console.log("캔버스 디버그 활성화");
+            option.debugPrinter = !option.debugPrinter;
         }
     })
 
@@ -552,7 +562,6 @@
         _task.id = result;
         _task.start();
         Memory.task.set(result, _task);
-        console.log("태스크 등록");
     }
     //태스크 업데이트
     taskManager.updateTasks = function (delta) {
@@ -562,14 +571,13 @@
     }
     //태스크 일괄스킵
     taskManager.skipTasks = function () {
-        console.log("태스크 전부 스킵");
         Memory.task.forEach(task => {
             task.skip();
         });
+        Memory.task.clear();
     }
     //태스크 해제
     taskManager.disposeTask = function (id) {
-        console.log("태스크 완료 삭제");
         Memory.task.delete(id);
     }
 
@@ -606,27 +614,33 @@
 
         //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
         textHandler.speaker = speaker;
-        textHandler.currentText = text.replace(/^\"|\"$/g, "");
-        textHandler.speaker = speaker;
         blockNext = true;
 
         var task = new Task();
         task.originText = text.replace(/^\"|\"$/g, "");
         task.cycleTime = parseFloat(cycleTime);
         task.timeStore = 0;
-        task.cursor = 0;
+        task.cursor = 1;
         
         task.update = function(delta){
             this.timeStore += delta;
             
             if(this.timeStore >= this.cycleTime){
-                this.cursor += parseInt(this.timeStore / this.cycleTime)
-                console.log(parseInt(this.timeStore / this.cycleTime));
+                this.cursor += parseInt(this.timeStore / this.cycleTime);
+                
+                if(this.cursor >= this.originText.length){
+                    
+                    this.end();
+                }
                 this.timeStore = 0;
             }  
+            textHandler.currentText = this.originText.slice(0,this.cursor);
         }
+        task.skip = function(){
+            textHandler.currentText = this.originText;
+        }
+        
         taskManager.registTask(task);
-        //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
     }
 
     function showImage(name, imageName, pos_x, pos_y, pos_z) {
@@ -635,11 +649,13 @@
         var percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
 
         //Support Percentage Position
-        if (percentageRegex.test(pos_x.toString())) {
-            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%', '')), 0).x;
-        }
-        if (percentageRegex.test(pos_y.toString())) {
-            pos_y = convertPercentagePosition(0, parseFloat(pos_y.replace('%', ''))).y;
+        if(pos_x != null && pos_y != null){
+            if (percentageRegex.test(pos_x.toString())) {
+                pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%', '')), 0).x;
+            }
+            if (percentageRegex.test(pos_y.toString())) {
+                pos_y = convertPercentagePosition(0, parseFloat(pos_y.replace('%', ''))).y;
+            }
         }
 
         if (img == null) {
@@ -656,7 +672,6 @@
     }
 
     function hideImage(name) {
-        debugPrinter("hide object(name:" + name + ")");
         Memory.objects.get(name).changeVisibility(false);
     }
 
@@ -893,6 +908,7 @@
         rawFile.send(null);
     }
 
+
     function translateScript(originCode) {
         var codeSections = originCode.split(/\n\n|\r\n\r\n/);
         codeSections.forEach(eachSection => {
@@ -909,7 +925,8 @@
                 var parameterSet = paramRegex.exec(eachLine)[1];
                 var parameters = parameterSet.split(',');
                 var command = eachLine.replace(paramRegex, "");
-                var codeLineObj = new Command(command.replace(" ", ""), parameters);
+                var trimedParameters = parameters => parameters.map(element => { return element.trim();});
+                var codeLineObj = new Command(command.trim(), trimedParameters(parameters));
                 if (defineCommandList.has(codeLineObj.command)) {
                     defines.push(codeLineObj);
                 }
@@ -942,8 +959,10 @@
 
     async function preDefines() {
         let imgCommands = new Array();
+        var trimedParameters = parameters => parameters.map(element => { return element.trim();});
         defines.forEach(define => {
             var command = defineCommandList.get(define.command);
+            define.parameters = trimedParameters(define.parameters);
             if (command == defineImage) {
                 imgCommands.push(define);
                 return;
