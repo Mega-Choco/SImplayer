@@ -31,6 +31,7 @@
             src: url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.eot?#iefix') format('embedded-opentype'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.woff') format('woff'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.ttf') format('truetype');
         }
     </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
 <body>
@@ -237,12 +238,12 @@
     let textBoxSetting = {};
     textBoxSetting.width = 680;//px
     textBoxSetting.height = 320;//px
-    textBoxSetting.name_xPos = 20;//px (텍스트상자 내부의 상대위치)
-    textBoxSetting.name_yPos = 0;//px (텍스트상자 내부의 상대위치)
+    textBoxSetting.name_xPos = 50;//px (텍스트상자 내부의 상대위치)
+    textBoxSetting.name_yPos = 20;//px (텍스트상자 내부의 상대위치)
     textBoxSetting.padding = {};
-    textBoxSetting.padding.top = 55;//px
-    textBoxSetting.padding.left = 60;//px
-    textBoxSetting.padding.right = 60;//px
+    textBoxSetting.padding.top = 90;//px
+    textBoxSetting.padding.left = 75;//px
+    textBoxSetting.padding.right = 75;//px
     textBoxSetting.padding.bottom = 20;//px;
     textBoxSetting.margin = {};
     textBoxSetting.margin.bottom = 10;//px
@@ -285,6 +286,7 @@
         resizeGame();
         loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/UnityTest.txt");
         translateScript(originScript);
+        //loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/M1Q1.txt");
 
         start();
     }
@@ -332,34 +334,54 @@
 
         Memory.objects.forEach(element => {
             if (element.isVisible) {
+                var flipX = element.scale.x > 0 ? 1:-1;
+                var flipY = element.scale.y > 0 ? 1:-1;
                 
+                var originalXPosition = element.position.x;
+                var originalYPosition = element.position.y;
+
+                var flipedPosition = new Vector2(element.position.x,element.position.y);
+
+
+                ctx.scale(element.scale.x,element.scale.y);
+                if(flipX == -1){
+                    flipedPosition.x = flipedPosition.x - (flipedPosition.x*2);
+                }
+                if(flipY == -1){
+                    flipedPosition.y = flipedPosition.y - (flipedPosition.y*2);
+                }
+
                 //이미지 중심 기준 위치값 보정표시
                 ctx.globalAlpha = element.opacity;
                 var fixedWidth = element.width * element.scale.x;
                 var fixedHeight = element.height * element.scale.y;
-                var flipX = element.scale.x > 0 ? 1:-1;
-                var flipY = element.scale.y > 0 ? 1:-1;
+                var fixedX =  ((flipedPosition.x) - (fixedWidth / 2));
+                var fixedY = ((flipedPosition.y) - (fixedHeight / 2)) ;
                 
+                
+               //if(flipX==-1){
+               //   ctx.scale(-1,1);
+               //   fixedX =0
+               //}
                 ctx.drawImage(
                     element.image,
-                    ((element.position.x) - (fixedWidth / 2)) * currentCanvasScale.x,
-                    ((element.position.y) - (fixedHeight / 2)) * currentCanvasScale.y,
+                    fixedX * currentCanvasScale.x,
+                    fixedY* currentCanvasScale.y,
                     fixedWidth * currentCanvasScale.x ,
                     fixedHeight * currentCanvasScale.y);
-                    
+                   
                     //디버그용 이미지 영역 표시
-                    
-                if (option.canvasDebug) {
-
-                    ctx.fillStyle = 'rgba(255,0,0,.5)';
-                    ctx.fillRect(
-                        ((element.position.x) - (fixedWidth / 2)) * currentCanvasScale.x,
-                    ((element.position.y) - (fixedHeight / 2)) * currentCanvasScale.y,
-                    fixedWidth * currentCanvasScale.x,
+                    if (option.canvasDebug) {
+                        
+                        ctx.fillStyle = 'rgba(255,0,0,.5)';
+                        ctx.fillRect(
+                            fixedX * currentCanvasScale.x,
+                    fixedY* currentCanvasScale.y,
+                    fixedWidth * currentCanvasScale.x ,
                     fixedHeight * currentCanvasScale.y);
-                }
-                ctx.stroke();
-                ctx.restore();
+                    } ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.stroke();
+                    ctx.restore();
             }
         });
 
@@ -383,7 +405,7 @@
                 (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
             );
         }
-        ctx.fillStyle = 'rgba(0,0,0,.75)'
+        ctx.fillStyle = 'rgba(0,0,0,.95)'
         ctx.fillRect(
             textBoxPos_x * currentCanvasScale.x,
             textBoxPos_y * currentCanvasScale.y,
