@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-
 <head>
-    <title>FrameHandler</title>
+    <title>Simplayer</title>
     <style>
         html,
         body {
@@ -310,7 +309,6 @@
 
             var sinceStart = now - startTime;
             var delta = (now - deltaPrev) / 1000;
-            var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
             deltaPrev = now;
             update(delta);
             draw();
@@ -330,8 +328,8 @@
 
         Memory.objects.forEach(element => {
             if (element.isVisible) {
-                var flipX = element.scale.x > 0 ? 1:-1;
-                var flipY = element.scale.y > 0 ? 1:-1;
+                var flipX = element.scale.x >= 0 ? 1:-1;
+                var flipY = element.scale.y >= 0 ? 1:-1;
                 
                 var originalXPosition = element.position.x;
                 var originalYPosition = element.position.y;
@@ -339,7 +337,7 @@
                 var flipedPosition = new Vector2(element.position.x,element.position.y);
 
 
-                ctx.scale(element.scale.x,element.scale.y);
+                ctx.scale(flipX,flipY);
                 if(flipX == -1){
                     flipedPosition.x = flipedPosition.x - (flipedPosition.x*2);
                 }
