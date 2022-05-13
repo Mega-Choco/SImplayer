@@ -157,11 +157,13 @@
     //////////////////////////////
 
     let defines = new Array();
+    //선언, 리소스선언용
     const defineCommandList = new Map([
         ['CHAR', defineCharacter],
         ['IMG', defineImage]
     ]);
 
+    //실제 동작용
     const CommandList = new Map([
         ['PRINT', print],
         ['SHOW', showImage],
@@ -952,7 +954,6 @@ function loadingScriptFromRemote(file) {
         }
         rawFile.send(null);
     }
-
 
     function translateScript(originCode) {
         var codeSections = originCode.split(/\n\n|\r\n\r\n/);
