@@ -192,16 +192,19 @@
         var words = text.split('');
         var line = '';
         for (var n = 0; n < words.length; n++) {
-            var testLine = line + words[n] + '';
-            var metrics = ctx.measureText(testLine);
-            var testWidth = metrics.width;
-            if (testWidth > maxWidth && n > 0) {
+            var textLine = line + words[n] + '';
+            var metrics = ctx.measureText(textLine);
+            var textWidth = metrics.width;
+            if ((textWidth > maxWidth && n > 0)||words[n]=='\n') {
                 ctx.fillText(line, x, y);
                 line = words[n] + '';
+                if(words[n]=='\n'){
+                    line = '';
+                }
                 y += lineHeight;
             }
             else {
-                line = testLine;
+                line = textLine;
             }
         }
         ctx.fillText(line, x, y);
@@ -281,7 +284,7 @@
         resizeGame();
        // loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/UnityTest.txt");
       // loadingScriptFromRemote("https://raw.githubusercontent.com/Mega-Choco/TestScripts/master/test.txt");
-     loadingScriptFromRemote("/test.txt");
+     loadingScriptFromRemote("/UnityTest.txt");
 
        translateScript(originScript);
 
@@ -403,7 +406,7 @@
                 (textBoxSetting.height - textBoxSetting.padding.top - textBoxSetting.padding.bottom) * currentCanvasScale.y //height
             );
         }
-        ctx.fillStyle = 'rgba(0,0,0,.3)'
+        ctx.fillStyle = 'rgba(0,0,0,.7)'
         ctx.fillRect(
             textBoxPos_x * currentCanvasScale.x,
             textBoxPos_y * currentCanvasScale.y,
@@ -636,7 +639,9 @@
         blockNext = true;
 
         var task = new Task();
-        task.originText = text.replace(/^\"|\"$/g, "");
+        console.warn(text);
+        task.originText = (text.replace(/^\"|\"$/g, "")).replace('\\n','\n');
+        console.warn(task.originText);
         task.cycleTime = parseFloat(cycleTime);
         task.timeStore = 0;
         task.cursor = 1;
@@ -963,7 +968,7 @@ function loadingScriptFromRemote(file) {
                     return;
                 }
                 var parameterSet = paramRegex.exec(eachLine)[1];
-                var parameters = parameterSet.split(',');
+                var parameters = parameterSet.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g);
                 var command = eachLine.replace(paramRegex, "");
                 var trimedParameters = parameters => parameters.map(element => { element =  element.trim(); if(element == 'null'){element = null} return element;});
                 var codeLineObj = new Command(command.trim(), trimedParameters(parameters));

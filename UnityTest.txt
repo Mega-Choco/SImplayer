@@ -15,11 +15,11 @@ SET_BG (bg_dote)
 SHOW (port_to, toko5, 0, 50%,1)
 SCALE (port_to, -1,1)
 MOVE (port_to, 25%, 50%, 7)
-PRINT (토코, "Hello!")
+PRINT (토코, "이것이 개행이다\nwwwwww")
 
 PRINT (토코, "My name is Toko.")
 
-PRINT (토코, "당신과는 다른 2D 일러스트 입니다.")
+PRINT (토코, "당신과,는 "다른" '2D' [일러스트] 입니다.")
 
 SHOW (port_to, toko2)
 PRINT (토코, "다시말해 저는 가상의 인물이라는 말이죠!")
