@@ -642,7 +642,7 @@
 
         var task = new Task();
         console.warn(text);
-        task.originText = (text.replace(/^\"|\"$/g, "")).replace('\\n','\n');
+        task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g,'\n');
         console.warn(task.originText);
         task.cycleTime = parseFloat(cycleTime);
         task.timeStore = 0;
