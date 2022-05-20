@@ -15,7 +15,7 @@ SET_BG (bg_dote)
 SHOW (port_to, toko5, 0, 50%,1)
 SCALE (port_to, -1,1)
 MOVE (port_to, 25%, 50%, 7)
-PRINT (토코, "이것이 개행이다\n\n실전편\n연습편\n송편")
+PRINT (토코, "이것이 개행이다\n\n실전편\n송편")
 
 PRINT (토코, "My name is Toko.")
 
