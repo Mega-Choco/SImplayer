@@ -5,3 +5,4 @@ IMG (bg_moon, https://realworld.blob.core.windows.net/misc-files/CbN54ZLGFcR1-s5
 SET_BG (bg_moon)
 SHOW (usa,usagi,10%,60%,1)
 SCALE (usa,2,2)
+MOVE (usa,100%,null,1)

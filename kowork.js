@@ -279,7 +279,6 @@ function loop() {
         var delta = (now - deltaPrev) / 1000;
         deltaPrev = now;
         update(delta);
-        console.log(delta);
         draw();
     }
 }
@@ -340,7 +339,7 @@ function draw() {
     //Drawing textbox
     var textBoxPos_x = ((option.width / 2) - (textBoxSetting.width / 2));
     var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
- 
+
     ctx.fillStyle = 'rgba(0,0,0,.7)'
     ctx.fillRect(
         textBoxPos_x * currentCanvasScale.x,
@@ -690,18 +689,20 @@ function setObjectScale(name, scale_x, sacle_y) {
 }
 
 //일반이동
-function moveToward(name, target_x, target_y, speed) {
+function moveToward(name, target_x, target_y, time) {
     var task = new Task();
     task.targetObj = null;
     task.target_pos = {};
     task.target_pos.x = null;
     task.target_pos.y = null;
-    task.speed = null;
+    task.time = null;
+    task.speed = 0;
     task.start = function () {
         this.targetObj = Memory.objects.get(name);
-        this.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
-        this.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
-        this.speed = parseInt(speed) * 40;
+        this.target_pos.x = target_x == null ? this.targetObj.position.x : parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
+        this.target_pos.y = target_y == null ? this.targetObj.position.y : parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
+        this.time = parseFloat(time);
+        this.speed = Math.Vector2Distance(this.targetObj.position, this.target_pos) / this.time;
     }
     task.update = function (delta) {
         var newPos = Math.Vector2MoveTowards(new Vector2(this.targetObj.position.x, this.targetObj.position.y), this.target_pos, this.speed * delta);
@@ -718,6 +719,61 @@ function moveToward(name, target_x, target_y, speed) {
     }
     taskManager.registTask(task);
 }
+
+function easeOut(time, x) {
+    return time - (time - x) * (time - x);
+}
+
+function easeIn(time, x) {
+
+}
+
+
+function moveEase(name, target_x, target_y, time, type) {
+
+    var task = new Task();
+    task.targetObj = null;
+    task.target_pos = {};
+    task.target_pos.x = null;
+    task.target_pos.y = null;
+    task.time = time;
+    task.durationStore = 0;
+    task.speed = 100;
+    if (type == "In") {
+        task.start = function () {
+            this.targetObj = Memory.objects.get(name);
+            this.target_pos.x = parseFloat(CheckPercentageNumber(target_x) ? convertPercentagePosition(target_x, 0).x : target_x);
+            this.target_pos.y = parseFloat(CheckPercentageNumber(target_y) ? convertPercentagePosition(0, target_y).y : target_y);
+        }
+        task.update = function (delta) {
+            this.durationStore += delta;
+
+            console.log(easeOut(this.time, this.durationStore).toFixed(1));
+            // this.durationStore += delta;
+            // var durationPercentage = this.durationStore / time;
+            // console.log(durationPercentage);
+
+            // var newPos = Math.Vector2MoveTowards(new Vector2(
+            //     this.targetObj.position.x,
+            //     this.targetObj.position.y),
+            //     this.target_pos, easeOut(durationPercentage) * delta);
+
+            // this.targetObj.position.x = newPos.x;
+            // this.targetObj.position.y = newPos.y;
+            // if (newPos == this.target_pos) {
+            //     console.log("연산종료");
+            //     this.end();
+            // }
+        }
+        task.skip = function () {
+            this.targetObj.position.x = this.target_pos.x;
+            this.targetObj.position.y = this.target_pos.y;
+        }
+        taskManager.registTask(task);
+    }
+
+}
+
 
 //선형보간 이동
 function lerpMove(name, target_x, target_y, speed) {
@@ -924,7 +980,6 @@ function translateScript(originCode) {
 }
 
 function excuteCodeLines() {
-    console.log("코드라인 실행");
     var codeLines = scriptHandler.getNextScriptSection();
     if (codeLines == null) {
         //window.close();
