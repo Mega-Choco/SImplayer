@@ -10,6 +10,7 @@ IMG (kohaku1, https://realworld.blob.core.windows.net/misc-files/IB59G9EjDzI-tUx
 IMG (kohaku2, https://realworld.blob.core.windows.net/misc-files/9dBoa34scMX6L4e0Y_sPlw-portrait_kohaku_02.png)
 IMG (kohaku3, https://realworld.blob.core.windows.net/misc-files/Rh9HG9WREYxV652XW-8GTQ-portrait_kohaku_03.png)
 IMG (bg_dote, https://realworld.blob.core.windows.net/misc-files/YH5tAqaONzUuHu_C7tlrwg-bg_dote.jpg)
+
 SET_BG (bg_dote)
 
 SHOW (port_to, toko5, 0, 50%,1)
