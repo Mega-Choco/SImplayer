@@ -134,7 +134,8 @@ const CommandList = new Map([
     ['MOVE', moveToward],
     ['SET_BG', setBackground],
     ['BOUNCE', bounceObject],
-    ['SHAKE', shakeObject]
+    ['SHAKE', shakeObject],
+    ['SET_POS', setObjectPosition]
 ]);
 
 let scriptHandler = {
@@ -624,7 +625,7 @@ function showImage(name, imageName, pos_x, pos_y, pos_z) {
     }
     var targetObj = already;
     if (already == null) {
-        targetObj = new GameObject(img, pos_x, pos_y);
+        targetObj = new GameObject(img, pos_x, pos_y, pos_z == null ? 1 : parseInt(pos_z));
     }
     targetObj.changeImage(img);
     Memory.objects.set(name, targetObj);
@@ -632,6 +633,20 @@ function showImage(name, imageName, pos_x, pos_y, pos_z) {
     return;
 }
 
+
+function setObjectPosition(name, pos_x,pos_y,pos_z){
+    let target = Memory.objects.get(name);
+
+    pos_x = pos_x == null ? target.position.x : pos_x;
+    pos_y = pos_y == null ? target.position.y : pos_y;
+    pos_z = pos_z == null ? target.z_index : pos_z;
+
+    target.position.x = pos_x;
+    target.position.y = pos_y;
+    target.z_index = pos_z;
+
+    return;
+}
 function hideImage(name) {
     Memory.objects.get(name).changeVisibility(false);
 }
@@ -672,11 +687,13 @@ function fadeObject(name, start, to, speed) {
     taskManager.registTask(task);
 }
 function setBackground(imageName) {
-    var centerPos = convertPercentagePosition(50, 50);
-    var bgObject = new GameObject(Memory.images.get(imageName),
-        centerPos.x, centerPos.y, 1, option.width, option.height);
-    bgObject.z_index = 0;
-    Memory.objects.set('BG', bgObject);
+    showImage('BG',imageName,'50%','50%',0);
+    return;
+   //var centerPos = convertPercentagePosition(50, 50);
+   ////var bgObject = new GameObject(Memory.images.get(imageName),
+   ////    centerPos.x, centerPos.y, 1, option.width, option.height);
+   ////bgObject.z_index = 0;
+    //Memory.objects.set('BG', bgObject);
 }
 function setObjectScale(name, scale_x, sacle_y) {
     var target = Memory.objects.get(name);
