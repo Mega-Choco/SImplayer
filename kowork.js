@@ -189,17 +189,18 @@ let dumpedMemory = new Array();
 //사용자 지정기준옵션
 let option = {};
 option.FPS = 60; //게임 프레임 (60이하)
-option.width = 720; //기준 스크린 폭(px)
-option.height = 1280; // 기준 스크린 높이(px)
+option.width = 900; //기준 스크린 폭(px)
+option.height = 1600; // 기준 스크린 높이(px)
 option.fontSize = 38;//텍스트 폰트 사이즈
 option.nameSize = 24;//이름표시 폰트사이즈
 option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
-option.dialogueSpeed = 0.07;
+option.dialogueSpeed = 0.055;
 
 //텍스트영역 설정값
 let textBoxSetting = {};
 textBoxSetting.width = 680;       //px
 textBoxSetting.height = 320;      //px
+textBoxSetting.lineHeight = 0;
 textBoxSetting.name_xPos = 50;    //px (텍스트상자 내부의 상대위치)
 textBoxSetting.name_yPos = 20;    //px (텍스트상자 내부의 상대위치)
 textBoxSetting.padding = {};
@@ -224,7 +225,8 @@ let originScript = null;
 let blockNext = false;
 var fontSetting = {
     currentSize: 0,
-    fontInfo: ""
+    fontInfo: "",
+    lineHeight: 0
 };
 
 var currentCanvasScale = { x: 1, y: 1 };
@@ -341,7 +343,7 @@ function draw() {
     var textBoxPos_x = ((option.width / 2) - (textBoxSetting.width / 2));
     var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
 
-    ctx.fillStyle = 'rgba(0,0,0,.7)'
+    ctx.fillStyle = 'rgba(0,0,0,.95)'
     ctx.fillRect(
         textBoxPos_x * currentCanvasScale.x,
         textBoxPos_y * currentCanvasScale.y,
@@ -369,8 +371,12 @@ function draw() {
         dialogueAreaPos_x * currentCanvasScale.x,
         ((dialogueAreaPos_y) * currentCanvasScale.y) + fontSetting.currentSize,
         (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
-        fontSetting.currentSize
+        fontSetting.lineHeight
     );
+
+
+
+
     ctx.stroke();
 }
 
@@ -387,7 +393,7 @@ function calculateFontSize() {
     var ratio = option.fontSize / option.width;   // calc ratio
     var size = $canvas.width * ratio;
     fontSetting.currentSize = (size | 0);   // get font size based on current width
-
+    fontSetting.lineHeight = ((option.fontSize + textBoxSetting.lineHeight) / option.width) * $canvas.width;
     fontSetting.fontInfo = fontSetting.currentSize + 'px NanumBarunGothic'; // set font
 }
 
@@ -573,13 +579,12 @@ function print(name, text, cycleTime) {
         cycleTime = option.dialogueSpeed;
     }
 
-    //  debugPrinter("<pre><pre style=\"color:" + speaker.color + ";\">" + speaker.name + "</pre>" + text + "</pre>");
     textHandler.speaker = speaker;
     blockNext = true;
 
     var task = new Task();
     console.warn(text);
-    task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g, '\n');
+    task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g, '\n') + ' ▽';
     console.warn(task.originText);
     task.cycleTime = parseFloat(cycleTime);
     task.timeStore = 0;
@@ -606,35 +611,43 @@ function print(name, text, cycleTime) {
 }
 
 function showImage(name, imageName, pos_x, pos_y, pos_z) {
+
     var already = Memory.objects.get(name);
     var img = Memory.images.get(imageName);
     var percentageRegex = /([0-9]+)(\.?[0-9]+)?%/;
 
-    //Support Percentage Position
-    if (pos_x != null && pos_y != null) {
-        if (percentageRegex.test(pos_x.toString())) {
-            pos_x = convertPercentagePosition(parseFloat(pos_x.replace('%', '')), 0).x;
-        }
-        if (percentageRegex.test(pos_y.toString())) {
-            pos_y = convertPercentagePosition(0, parseFloat(pos_y.replace('%', ''))).y;
-        }
-    }
+    pos_x = pos_x == null ? null :
+        percentageRegex.test(pos_x) == true ? convertPercentagePosition(parseFloat(pos_x.replace('%', '')), 0).x : pos_x;
+
+    pos_y = pos_y == null ? null :
+        percentageRegex.test(pos_y) == true ? convertPercentagePosition(0, parseFloat(pos_y.replace('%', ''))).y : pos_y;
+
 
     if (img == null) {
         console.error("[" + imageName + "] 이미지는 존재하지 않습니다.");
+        return;
     }
+
     var targetObj = already;
+
     if (already == null) {
         targetObj = new GameObject(img, pos_x, pos_y, pos_z == null ? 1 : parseInt(pos_z));
+        Memory.objects.set(name, targetObj);
     }
-    targetObj.changeImage(img);
-    Memory.objects.set(name, targetObj);
-    debugPrinter("Object image Changed on memory (name:" + name + ", resource:" + imageName + ")");
+    else {
+        var newPosition = new Vector2();
+        newPosition.x = pos_x == null ? targetObj.position.x : parseFloat(pos_x);
+        newPosition.y = pos_y == null ? targetObj.position.y : parseFloat(pos_y);
+
+        targetObj.position = newPosition;
+        targetObj.z_index = pos_z == null ? targetObj.z_index : parseInt(pos_z);
+        targetObj.changeImage(img);
+    }
     return;
 }
 
 
-function setObjectPosition(name, pos_x,pos_y,pos_z){
+function setObjectPosition(name, pos_x, pos_y, pos_z) {
     let target = Memory.objects.get(name);
 
     pos_x = pos_x == null ? target.position.x : pos_x;
@@ -655,7 +668,8 @@ function disposeObject(name) {
     debugPrinter("dispose Object on memory (name:" + name + ")");
 }
 
-function fadeObject(name, start, to, speed) {
+function fadeObject(name, start, to, time) {
+
     var task = new Task();
     task.targetObj = null;
     task.startOpt = null;
@@ -665,8 +679,9 @@ function fadeObject(name, start, to, speed) {
         task.targetObj = Memory.objects.get(name);
         task.startOpt = start == null ? parseFloat(this.targetObj.opacity) : parseFloat(start);
         task.endOpt = parseFloat(to);
-        task.targetObj.opacity = task.startOpt;
-        task.speed = parseFloat(speed) * (this.startOpt > this.endOpt ? -1 : 1);
+
+        task.targetObj.opacity = this.startOpt;
+        task.speed = (this.startOpt > this.endOpt ? this.startOpt - this.endOpt : this.endOpt - this.startOpt) * (this.startOpt > this.endOpt ? -1 : 1) / parseFloat(time);
     }
     task.update = function (delta) {
 
@@ -687,12 +702,12 @@ function fadeObject(name, start, to, speed) {
     taskManager.registTask(task);
 }
 function setBackground(imageName) {
-    showImage('BG',imageName,'50%','50%',0);
+    showImage('BG', imageName, '50%', '50%', 0);
     return;
-   //var centerPos = convertPercentagePosition(50, 50);
-   ////var bgObject = new GameObject(Memory.images.get(imageName),
-   ////    centerPos.x, centerPos.y, 1, option.width, option.height);
-   ////bgObject.z_index = 0;
+    //var centerPos = convertPercentagePosition(50, 50);
+    ////var bgObject = new GameObject(Memory.images.get(imageName),
+    ////    centerPos.x, centerPos.y, 1, option.width, option.height);
+    ////bgObject.z_index = 0;
     //Memory.objects.set('BG', bgObject);
 }
 function setObjectScale(name, scale_x, sacle_y) {
