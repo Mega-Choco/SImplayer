@@ -132,7 +132,7 @@ const CommandList = new Map([
     ['SCALE', setObjectScale],
     ['MOVE_LERP', lerpMove],
     ['MOVE', moveToward],
-    ['SET_BG', setBackground],
+    ['BG', setBackground],
     ['BOUNCE', bounceObject],
     ['SHAKE', shakeObject],
     ['SET_POS', setObjectPosition]
@@ -189,8 +189,8 @@ let dumpedMemory = new Array();
 //사용자 지정기준옵션
 let option = {};
 option.FPS = 60; //게임 프레임 (60이하)
-option.width = 900; //기준 스크린 폭(px)
-option.height = 1600; // 기준 스크린 높이(px)
+option.width = 720; //기준 스크린 폭(px)
+option.height = 1280; // 기준 스크린 높이(px)
 option.fontSize = 38;//텍스트 폰트 사이즈
 option.nameSize = 24;//이름표시 폰트사이즈
 option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
@@ -252,7 +252,6 @@ function init() {
     consoleRoot = document.getElementById('console');
     ctx = $canvas.getContext("2d");
     ctx.font = "";
-
     resizeGame();
     translateScript(originScript);
     start();
@@ -422,8 +421,8 @@ function resizeGame() {
 
     $canvas.style.marginTop = (-newHeight / 2) + 'px';
     $canvas.style.marginLeft = (-newWidth / 2) + 'px';
-    $canvas.width = newWidth;
-    $canvas.height = newHeight;
+    $canvas.width = newWidth * 2;
+    $canvas.height = newHeight * 2;
     currentCanvasScale.x = parseFloat($canvas.width / option.width).toFixed(3);
     currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
 
