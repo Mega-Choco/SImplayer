@@ -1,8 +1,9 @@
 /////////////////////////Base Objects Area//////////////////////////////
 class Character {
-    constructor(_name, _color) {
+    constructor(_name,_text,_color) {
         this.name = _name,
-            this.color = _color
+        this.text = _text,
+        this.color = _color
     }
 }
 
@@ -357,7 +358,7 @@ function draw() {
     if (textHandler.speaker != null) {
         ctx.fillStyle = textHandler.speaker.color;
         //Drawing Name on Textbox area
-        ctx.fillText(textHandler.speaker.name,
+        ctx.fillText(textHandler.speaker.text,
             (textBoxPos_x + textBoxSetting.name_xPos) * currentCanvasScale.x,
             ((textBoxPos_y + textBoxSetting.name_yPos) * currentCanvasScale.y) + fontSetting.currentSize);
 
@@ -552,8 +553,8 @@ function executeNext() {
     excuteCodeLines();
 }
 
-function defineCharacter(name, personalColor) {
-    Memory.characters.set(name.replace(" ", ""), new Character(name, personalColor));
+function defineCharacter(name, text,  personalColor) {
+    Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? name : text) ,personalColor));
 }
 
 async function defineImage(name, sourceUrl) {
@@ -583,7 +584,7 @@ function print(name, text, cycleTime) {
 
     var task = new Task();
     console.warn(text);
-    task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g, '\n') + ' ▽';
+    task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g, '\n');
     console.warn(task.originText);
     task.cycleTime = parseFloat(cycleTime);
     task.timeStore = 0;
