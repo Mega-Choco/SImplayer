@@ -1,4 +1,4 @@
-/////////////////////////Base Objects Area//////////////////////////////
+/////////////////////////Base Class Area//////////////////////////////
 class Character {
     constructor(_name,_text,_color) {
         this.name = _name,
@@ -119,24 +119,24 @@ Math.LerpVector2 = function (v1, v2, amt) {
 let defines = new Array();
 //선언, 리소스선언용
 const defineCommandList = new Map([
-    ['CHAR', defineCharacter],
-    ['IMG', defineImage]
+    ['char', defineCharacter],
+    ['img', defineImage]
 ]);
 
 //실제 동작용
 const CommandList = new Map([
-    ['PRINT', print],
-    ['SHOW', showImage],
-    ['HIDE', hideImage],
-    ['DISPOSE', disposeObject],
-    ['FADE', fadeObject],
-    ['SCALE', setObjectScale],
-    ['MOVE_LERP', lerpMove],
-    ['MOVE', moveToward],
-    ['BG', setBackground],
-    ['BOUNCE', bounceObject],
-    ['SHAKE', shakeObject],
-    ['SET_POS', setObjectPosition]
+    ['print', print],
+    ['show', showImage],
+    ['hide', hideImage],
+    ['dispose', disposeObject],
+    ['fade', fadeObject],
+    ['scale', setObjectScale],
+    ['move_lerp', lerpMove],
+    ['move', moveToward],
+    ['bg', setBackground],
+    ['bounce', bounceObject],
+    ['shake', shakeObject],
+    ['set_pos', setObjectPosition]
 ]);
 
 let scriptHandler = {
@@ -373,10 +373,6 @@ function draw() {
         (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
         fontSetting.lineHeight
     );
-
-
-
-
     ctx.stroke();
 }
 
@@ -483,7 +479,6 @@ document.addEventListener('keyup', event => {
             return;
         }
         blockNext = false;
-
     }
     if (event.code == 'D') {
         dumpMemory();
@@ -666,6 +661,12 @@ function hideImage(name) {
 
 function disposeObject(name) {
     debugPrinter("dispose Object on memory (name:" + name + ")");
+    try{
+        Memory.objects.delete(name);
+    }
+    catch(exception){
+        console.log("해당 오브젝트가 메모리에 없습니다.");
+    }
 }
 
 function fadeObject(name, start, to, time) {
@@ -994,10 +995,10 @@ function translateScript(originCode) {
                 return;
             }
             var parameterSet = paramRegex.exec(eachLine)[1];
-            var parameters = parameterSet.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g);
+            let parameters = parameterSet.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g);
             var command = eachLine.replace(paramRegex, "");
-            var trimedParameters = parameters => parameters.map(element => { element = element.trim(); if (element == 'null') { element = null } return element; });
-            var codeLineObj = new Command(command.trim(), trimedParameters(parameters));
+            var trimedParameters = parameters => parameters.map(element => {if(element == null || element == 'null'){return null;} element = element.trim(); if(element === ""){return null;} return element});
+            var codeLineObj = new Command(command.trim().toLowerCase(), trimedParameters(parameters));
             if (defineCommandList.has(codeLineObj.command)) {
                 defines.push(codeLineObj);
             }
@@ -1029,7 +1030,7 @@ function excuteCodeLines() {
 
 async function preDefines() {
     let imgCommands = new Array();
-    var trimedParameters = parameters => parameters.map(element => { return element.trim(); });
+    let trimedParameters = parameters => parameters.map(element =>  {if(element == null){return null;} element = element.trim(); if (element == 'null') { element = null } return element; });
     defines.forEach(define => {
         var command = defineCommandList.get(define.command);
         define.parameters = trimedParameters(define.parameters);

@@ -1,13 +1,13 @@
-IMG (자라_기본, /imgs/남궁자라_기본.png)
-IMG (자라_촬영중, /imgs/남궁자라_촬영중.png)
-IMG (자라주니어_기본, /imgs/남궁주니어_기본.png)
+IMG(자라_기본, /imgs/남궁자라_기본.png)
+IMG(자라_촬영중, /imgs/남궁자라_촬영중.png)
+IMG(자라주니어_기본, /imgs/남궁주니어_기본.png)
 IMG (자라주니어_놀람, /imgs/남궁주니어_놀람.png)
 CHAR (papa, 남궁자라, #008000)
-CHAR (jajr,자라 주니어 ,#008000)
+CHAR (jajr,,#008000)
 
 SHOW (jarajr, 자라주니어_기본, 20%, 50%, 1)
-SCALE (jarajr, -1,1)
-FADE (jarajr, 0, 1, 0.5)
+SCALE (jarajr, -1,2)
+FADE (jarajr,, 0.5, 1)
 PRINT (jajr, "주니어를 어떻게 주니 어?")
 
 PRINT (jajr, "푸하하!")
@@ -21,3 +21,5 @@ PRINT (jajr, "Save the world!\nmy final message...\nGood bye....")
 FADE (jarajr, 1,0,1)
 
 PRINT (jajr, "(이게 끝이야! 뭘 더 기다리는거야?\n 어서 나가!)")
+
+PRINT (papa, "진짜 끝이다.\n끝이야\n끝이라고\n만세만세\n만만세\n야호!")
