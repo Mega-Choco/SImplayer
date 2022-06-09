@@ -188,29 +188,39 @@ let dumpedMemory = new Array();
 /////////////////////////////////////////
 
 //사용자 지정기준옵션
-let option = {};
-option.FPS = 60; //게임 프레임 (60이하)
-option.width = 720; //기준 스크린 폭(px)
-option.height = 1280; // 기준 스크린 높이(px)
-option.fontSize = 38;//텍스트 폰트 사이즈
-option.nameSize = 24;//이름표시 폰트사이즈
-option.canvasDebug = false;//오브젝트 이미지 영역 표시여부(디버깅용)
-option.dialogueSpeed = 0.055;
+let option = {
+    FPS: 60, //게임 프레임 (60이하)
+    width:  720, //기준 스크린 폭(px)
+    height:  1280, // 기준 스크린 높이(px)
+    fontSize:  38,//텍스트 폰트 사이즈
+    nameSize:  24,//이름표시 폰트사이즈
+    canvasDebug: false,//오브젝트 이미지 영역 표시여부(디버깅용)
+    dialogueSpeed: 0.055
+};
+
 
 //텍스트영역 설정값
-let textBoxSetting = {};
-textBoxSetting.width = 680;       //px
-textBoxSetting.height = 320;      //px
-textBoxSetting.lineHeight = 0;
-textBoxSetting.name_xPos = 50;    //px (텍스트상자 내부의 상대위치)
-textBoxSetting.name_yPos = 20;    //px (텍스트상자 내부의 상대위치)
-textBoxSetting.padding = {};
-textBoxSetting.padding.top = 90;  //px
-textBoxSetting.padding.left = 75;  //px
-textBoxSetting.padding.right = 75;  //px
-textBoxSetting.padding.bottom = 20;  //px;
-textBoxSetting.margin = {};
-textBoxSetting.margin.bottom = 10;   //px
+let textBoxSetting = {
+    width : 680,       //px
+    height : 320,      //px
+    lineHeight:  0,
+    name_xPos: 50,    //px (텍스트상자 내부의 상대위치)
+    name_yPos: 20,    //px (텍스트상자 내부의 상대위치)
+    padding :{
+        top: 90,  //px
+        left: 75,  //px
+        right:  75,  //px
+        bottom:  20  //px
+    },
+    margin: {
+        bottom: 10   //px
+    },
+    ctcIconUrl: null,
+    ctcIconPos:{
+        x:580,
+        y:200
+    }
+};
 
 
 let baseAspectRatio = 0;
@@ -230,6 +240,9 @@ var fontSetting = {
     lineHeight: 0
 };
 
+
+let ctcIcon = null;
+
 var currentCanvasScale = { x: 1, y: 1 };
 let textBox = {
     x: 0,
@@ -239,6 +252,8 @@ let textBox = {
     padding_x: 0,
     padding_y: 0
 };
+
+let printFinished = false;
 
 function play(sourceUrl) {
     loadScript(sourceUrl);
@@ -259,6 +274,7 @@ function init() {
 }
 
 async function start() {
+    await settingEngineResource();
     await preDefines();
     excuteCodeLines();
     console.log(fpsInterval);
@@ -373,7 +389,38 @@ function draw() {
         (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
         fontSetting.lineHeight
     );
+
+
+    if(printFinished){
+        //test
+        if(ctcIcon != null){
+            ctx.drawImage( 
+                //(textBoxSetting.width - textBoxSetting.padding.left ) * currentCanvasScale.x,
+                ctcIcon,
+                (textBoxPos_x + textBoxSetting.ctcIconPos.x) * currentCanvasScale.x,
+                (textBoxPos_y + textBoxSetting.ctcIconPos.y)* currentCanvasScale.y,
+                textBoxSetting.padding.left * currentCanvasScale.x,
+                100 * currentCanvasScale.y);
+            }
+            else{
+                ctx.fillRect( 
+                    //(textBoxSetting.width - textBoxSetting.padding.left ) * currentCanvasScale.x,
+                    (textBoxPos_x + (textBoxSetting.width - textBoxSetting.padding.left) )* currentCanvasScale.x,
+                    textBoxPos_y * currentCanvasScale.y,
+                    textBoxSetting.padding.left * currentCanvasScale.x,
+                    100 * currentCanvasScale.y);
+                }
+    }
+
     ctx.stroke();
+}
+
+async function settingEngineResource(){
+    //텍스트 아이콘 다운로드 (임시)
+    if(textBoxSetting.ctcIconUrl != null){
+        await loadingImage(textBoxSetting.ctcIconUrl).then(img =>ctcIcon = img);
+    }
+    return;
 }
 
 //////////////// Resizing canvas //////////////////
@@ -556,12 +603,13 @@ async function defineImage(name, sourceUrl) {
     await loadingImage(sourceUrl).then(img => Memory.images.set(name.replace(" ", ""), img));
 }
 
+//이미지를 동기적으로 불러옵니다.
 async function loadingImage(src) {
     return new Promise((resolve, reject) => {
         let img = new Image();
         img.addEventListener('load', e => resolve(img));
         img.addEventListener('error', () => {
-            reject(new Error(`Failed to load image's URL: ${sourceUrl}`));
+            reject(new Error(`소스 주소로 부터 이미지 다운로드 실패! source: ${sourceUrl}`));
         });
         img.src = src;
     });
@@ -576,7 +624,7 @@ function print(name, text, cycleTime) {
 
     textHandler.speaker = speaker;
     blockNext = true;
-
+    printFinished = false;
     var task = new Task();
     console.warn(text);
     task.originText = (text.replace(/^\"|\"$/g, "")).replace(/\\n/g, '\n');
@@ -600,6 +648,7 @@ function print(name, text, cycleTime) {
     }
     task.skip = function () {
         textHandler.currentText = this.originText;
+        printFinished = true;
     }
 
     taskManager.registTask(task);
@@ -670,7 +719,6 @@ function disposeObject(name) {
 }
 
 function fadeObject(name, start, to, time) {
-
     var task = new Task();
     task.targetObj = null;
     task.startOpt = null;
