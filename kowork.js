@@ -234,7 +234,7 @@ let fps, fpsInterval, startTime, now, then, elapsed
 let deltaNow, deltaPrev;
 let originScript = null;
 let blockNext = false;
-var fontSetting = {
+let fontSetting = {
     currentSize: 0,
     fontInfo: "",
     lineHeight: 0
@@ -243,7 +243,7 @@ var fontSetting = {
 
 let ctcIcon = null;
 
-var currentCanvasScale = { x: 1, y: 1 };
+let currentCanvasScale = { x: 1, y: 1 };
 let textBox = {
     x: 0,
     y: 0,
@@ -268,6 +268,13 @@ function init() {
     consoleRoot = document.getElementById('console');
     ctx = $canvas.getContext("2d");
     ctx.font = "";
+    $canvas.onclick = ()=>{
+        if (Memory.task.size != 0) {
+            taskManager.skipTasks();
+            return;
+        }
+        blockNext = false;
+    };
     resizeGame();
     translateScript(originScript);
     start();
@@ -304,7 +311,7 @@ function loop() {
 
 function update(delta) {
     if (Memory.task.size === 0 && !blockNext) {
-        executeNext();
+        excuteCodeLines();
     }
     taskManager.updateTasks(delta);
 }
@@ -318,10 +325,6 @@ function draw() {
         if (element.isVisible) {
             var flipX = element.scale.x >= 0 ? 1 : -1;
             var flipY = element.scale.y >= 0 ? 1 : -1;
-
-            var originalXPosition = element.position.x;
-            var originalYPosition = element.position.y;
-
             var flipedPosition = new Vector2(element.position.x, element.position.y);
 
             ctx.globalAlpha = element.opacity;
@@ -416,7 +419,6 @@ function draw() {
 }
 
 async function settingEngineResource(){
-    //텍스트 아이콘 다운로드 (임시)
     if(textBoxSetting.ctcIconUrl != null){
         await loadingImage(textBoxSetting.ctcIconUrl).then(img =>ctcIcon = img);
     }
@@ -537,12 +539,9 @@ document.addEventListener('keyup', event => {
 })
 
 document.addEventListener("touchstart", event => {
-    if (Memory.task.size != 0) {
-        taskManager.skipTasks();
-        return;
-    }
-    blockNext = false;
+ 
 }, true);
+
 
 function dumpMemory() {
     var dump = Memory;
@@ -591,9 +590,6 @@ taskManager.disposeTask = function (id) {
 }
 
 ///////////////////////Commands Area/////////////////////////
-function executeNext() {
-    excuteCodeLines();
-}
 
 function defineCharacter(name, text,  personalColor) {
     Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? name : text) ,personalColor));
