@@ -1,8 +1,0 @@
-CHAR (A, #FF0000)
-IMG (usagi, https://realworld.blob.core.windows.net/misc-files/R57f6qfQ9Ckb8YrDsVdxDw-usagi.png)
-IMG (bg_moon, https://realworld.blob.core.windows.net/misc-files/CbN54ZLGFcR1-s5yd231Rw-deaf12eb-b442-4cd0-b7f2-6f7e73c1fda3%20(1).png)
-
-SET_BG (bg_moon)
-SHOW (usa,usagi,10%,60%,1)
-SCALE (usa,2,2)
-MOVE (usa,20%,null,1)
