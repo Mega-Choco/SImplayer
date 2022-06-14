@@ -228,6 +228,7 @@ let stop = false;
 let frameCount = 0;
 let $canvas = document.getElementById("canvas");
 let $container = document.getElementsByClassName('container');
+let $systemOverlay = document.getElementById("system-overlay");
 let consoleRoot = document.getElementById('console');
 let ctx;
 let fps, fpsInterval, startTime, now, then, elapsed
@@ -472,8 +473,24 @@ function resizeGame() {
     currentCanvasScale.x = parseFloat($canvas.width / option.width).toFixed(3);
     currentCanvasScale.y = parseFloat($canvas.height / option.height).toFixed(3);
 
+    var pos = getPosition($canvas);
+
+    $systemOverlay.style.width = $canvas.style.width;
+    $systemOverlay.style.height = $canvas.style.height;
+    $systemOverlay.style.left = pos.x;
+    $systemOverlay.style.top = pos.y
+
     calculateFontSize();
 }
+
+function getPosition( element ) {
+    var rect = element.getBoundingClientRect();
+    return {
+        x: rect.left,
+        y: rect.top
+    };
+}
+
 
 function initializeCanvasSize() {
     $canvas.width = option.width;
