@@ -1,9 +1,9 @@
 /////////////////////////Base Class Area//////////////////////////////
 class Character {
-    constructor(_name,_text,_color) {
+    constructor(_name, _text, _color) {
         this.name = _name,
-        this.text = _text,
-        this.color = _color
+            this.text = _text,
+            this.color = _color
     }
 }
 
@@ -190,10 +190,10 @@ let dumpedMemory = new Array();
 //사용자 지정기준옵션
 let option = {
     FPS: 60, //게임 프레임 (60이하)
-    width:  720, //기준 스크린 폭(px)
-    height:  1280, // 기준 스크린 높이(px)
-    fontSize:  38,//텍스트 폰트 사이즈
-    nameSize:  24,//이름표시 폰트사이즈
+    width: 720, //기준 스크린 폭(px)
+    height: 1280, // 기준 스크린 높이(px)
+    fontSize: 38,//텍스트 폰트 사이즈
+    nameSize: 24,//이름표시 폰트사이즈
     canvasDebug: false,//오브젝트 이미지 영역 표시여부(디버깅용)
     dialogueSpeed: 0.055
 };
@@ -201,25 +201,26 @@ let option = {
 
 //텍스트영역 설정값
 let textBoxSetting = {
-    width : 680,       //px
-    height : 320,      //px
-    lineHeight:  0,
+    width: 680,       //px
+    height: 320,      //px
+    lineHeight: 0,
     name_xPos: 50,    //px (텍스트상자 내부의 상대위치)
     name_yPos: 20,    //px (텍스트상자 내부의 상대위치)
-    padding :{
+    padding: {
         top: 90,  //px
         left: 75,  //px
-        right:  75,  //px
-        bottom:  20  //px
+        right: 75,  //px
+        bottom: 20  //px
     },
     margin: {
         bottom: 10   //px
     },
     ctcIconUrl: null,
-    ctcIconPos:{
-        x:580,
-        y:200
-    }
+    ctcIconPos: {
+        x: 1024,
+        y: 100
+    },
+    boxImageUrl: null
 };
 
 
@@ -243,6 +244,7 @@ let fontSetting = {
 
 
 let ctcIcon = null;
+let textBoxImage = null;
 
 let currentCanvasScale = { x: 1, y: 1 };
 let textBox = {
@@ -269,7 +271,7 @@ function init() {
     consoleRoot = document.getElementById('console');
     ctx = $canvas.getContext("2d");
     ctx.font = "";
-    $canvas.onclick = ()=>{
+    $canvas.onclick = () => {
         if (Memory.task.size != 0) {
             taskManager.skipTasks();
             return;
@@ -362,14 +364,25 @@ function draw() {
     //Drawing textbox
     var textBoxPos_x = ((option.width / 2) - (textBoxSetting.width / 2));
     var textBoxPos_y = (option.height - textBoxSetting.height - textBoxSetting.margin.bottom);
+    if (textBoxImage != null) {
+        ctx.drawImage(
+            textBoxImage,
+            textBoxPos_x * currentCanvasScale.x,
+            textBoxPos_y * currentCanvasScale.y,
+            textBoxSetting.width * currentCanvasScale.x,
+            textBoxSetting.height * currentCanvasScale.y
+        );
+    }
+    else {
+        ctx.fillStyle = 'rgba(0,0,0,.95)'
+        ctx.fillRect(
+            textBoxPos_x * currentCanvasScale.x,
+            textBoxPos_y * currentCanvasScale.y,
+            textBoxSetting.width * currentCanvasScale.x,
+            textBoxSetting.height * currentCanvasScale.y
+        );
 
-    ctx.fillStyle = 'rgba(0,0,0,.95)'
-    ctx.fillRect(
-        textBoxPos_x * currentCanvasScale.x,
-        textBoxPos_y * currentCanvasScale.y,
-        textBoxSetting.width * currentCanvasScale.x,
-        textBoxSetting.height * currentCanvasScale.y
-    );
+    }
 
     //Drawing Dialogue Area
     var dialogueAreaPos_x = (textBoxPos_x + textBoxSetting.padding.left)
@@ -384,7 +397,7 @@ function draw() {
 
     }
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     //Drawing Dialogue text
     ctx.font = fontSetting.fontInfo;
     textHandler.wrapText(textHandler.currentText,
@@ -395,33 +408,29 @@ function draw() {
     );
 
 
-    if(printFinished){
+    if (printFinished) {
         //test
-        if(ctcIcon != null){
-            ctx.drawImage( 
+        if (ctcIcon != null) {
+            ctx.drawImage(
                 //(textBoxSetting.width - textBoxSetting.padding.left ) * currentCanvasScale.x,
                 ctcIcon,
                 (textBoxPos_x + textBoxSetting.ctcIconPos.x) * currentCanvasScale.x,
-                (textBoxPos_y + textBoxSetting.ctcIconPos.y)* currentCanvasScale.y,
+                (textBoxPos_y + textBoxSetting.ctcIconPos.y) * currentCanvasScale.y,
                 textBoxSetting.padding.left * currentCanvasScale.x,
                 100 * currentCanvasScale.y);
-            }
-            else{
-                ctx.fillRect( 
-                    //(textBoxSetting.width - textBoxSetting.padding.left ) * currentCanvasScale.x,
-                    (textBoxPos_x + (textBoxSetting.width - textBoxSetting.padding.left) )* currentCanvasScale.x,
-                    textBoxPos_y * currentCanvasScale.y,
-                    textBoxSetting.padding.left * currentCanvasScale.x,
-                    100 * currentCanvasScale.y);
-                }
+        }
+
     }
 
     ctx.stroke();
 }
 
-async function settingEngineResource(){
-    if(textBoxSetting.ctcIconUrl != null){
-        await loadingImage(textBoxSetting.ctcIconUrl).then(img =>ctcIcon = img);
+async function settingEngineResource() {
+    if (textBoxSetting.ctcIconUrl != null) {
+        await loadingImage(textBoxSetting.ctcIconUrl).then(img => ctcIcon = img);
+    }
+    if (textBoxSetting.boxImageUrl != null) {
+        await loadingImage(textBoxSetting.boxImageUrl).then(img => textBoxImage = img);
     }
     return;
 }
@@ -483,7 +492,7 @@ function resizeGame() {
     calculateFontSize();
 }
 
-function getPosition( element ) {
+function getPosition(element) {
     var rect = element.getBoundingClientRect();
     return {
         x: rect.left,
@@ -556,7 +565,7 @@ document.addEventListener('keyup', event => {
 })
 
 document.addEventListener("touchstart", event => {
- 
+
 }, true);
 
 
@@ -608,8 +617,8 @@ taskManager.disposeTask = function (id) {
 
 ///////////////////////Commands Area/////////////////////////
 
-function defineCharacter(name, text,  personalColor) {
-    Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? name : text) ,personalColor));
+function defineCharacter(name, text, personalColor) {
+    Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? name : text), personalColor));
 }
 
 async function defineImage(name, sourceUrl) {
@@ -723,10 +732,10 @@ function hideImage(name) {
 
 function disposeObject(name) {
     debugPrinter("dispose Object on memory (name:" + name + ")");
-    try{
+    try {
         Memory.objects.delete(name);
     }
-    catch(exception){
+    catch (exception) {
         console.log("해당 오브젝트가 메모리에 없습니다.");
     }
 }
@@ -1058,7 +1067,7 @@ function translateScript(originCode) {
             var parameterSet = paramRegex.exec(eachLine)[1];
             let parameters = parameterSet.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g);
             var command = eachLine.replace(paramRegex, "");
-            var trimedParameters = parameters => parameters.map(element => {if(element == null || element == 'null'){return null;} element = element.trim(); if(element === ""){return null;} return element});
+            var trimedParameters = parameters => parameters.map(element => { if (element == null || element == 'null') { return null; } element = element.trim(); if (element === "") { return null; } return element });
             var codeLineObj = new Command(command.trim().toLowerCase(), trimedParameters(parameters));
             if (defineCommandList.has(codeLineObj.command)) {
                 defines.push(codeLineObj);
@@ -1091,7 +1100,7 @@ function excuteCodeLines() {
 
 async function preDefines() {
     let imgCommands = new Array();
-    let trimedParameters = parameters => parameters.map(element =>  {if(element == null){return null;} element = element.trim(); if (element == 'null') { element = null } return element; });
+    let trimedParameters = parameters => parameters.map(element => { if (element == null) { return null; } element = element.trim(); if (element == 'null') { element = null } return element; });
     defines.forEach(define => {
         var command = defineCommandList.get(define.command);
         define.parameters = trimedParameters(define.parameters);

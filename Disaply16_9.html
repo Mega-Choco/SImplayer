@@ -11,10 +11,10 @@
 
         </canvas>
     </div>
-    <div id="system-overlay" style="width: 3vw; height:30vh; z-index:30; position: absolute;">
-        <div style="width: 4vw;
-        height: 4vw;
-        float: right; background-color: red;" onclick="console.log('화면 닫기')">
+    <div id="system-overlay" style="width: 3vw; height:30vh; z-index:30; position: absolute;"
+        onclick="console.log('조작할거야')">
+        <div style=" z-index:999; width: 4vw; height: 4vw; float: right; background-color: red;"
+            onclick="console.log('화면 닫기')">
             <!-- <a onclick="console.log('화면닫기')" class="close"></a>-->
         </div>
     </div>
@@ -24,10 +24,17 @@
     <script src="https://realworld.blob.core.windows.net/misc-files/Zn__9gMxqAorkOhvkVOPDg-Realworld_JSLib.js"></script>
     <script type="text/javascript">
         option.FPS = 60;
-        option.width = 720;
-        option.height = 1280;
+        option.width = 1280;
+        option.height = 720;
+
+
         textBoxSetting.lineHeight = 15;
-        textBoxSetting.ctcIconUrl = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/VFJ1Rq_kBVedT6lSoqkIug-%EB%82%A8%EA%B6%81%EC%9E%90%EB%9D%BC_%EA%B8%B0%EB%B3%B8.png'
-        play("/scripts/turtle_demo.txt");
+        textBoxSetting.width = 1280;
+        textBoxSetting.height = 209;
+        textBoxSetting.margin.bottom = 0;
+        //textBoxSetting.ctcIconUrl = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/VFJ1Rq_kBVedT6lSoqkIug-%EB%82%A8%EA%B6%81%EC%9E%90%EB%9D%BC_%EA%B8%B0%EB%B3%B8.png'
+        textBoxSetting.ctcIconUrl = null;
+        textBoxSetting.boxImageUrl = "/imgs/box_frame.png"
+        play("/scripts/16_9_demo.txt");
     </script>
 </body>
