@@ -11,13 +11,18 @@
 
         </canvas>
     </div>
-    <div id="system-overlay" style="width: 3vw; height:30vh; z-index:30; position: absolute;"
-        onclick="console.log('조작할거야')">
-        <div style=" z-index:999; width: 4vw; height: 4vw; float: right; background-color: red;"
-            onclick="console.log('화면 닫기')">
-            <!-- <a onclick="console.log('화면닫기')" class="close"></a>-->
+    <div id="system-overlay">
+        <div id="execute-area" style="z-index: 10; position: absolute; width:100%;height:100%;" onclick="console.log('continue')"></div>
+        <div id="btn-close" style="position:absolute; z-index:100; right: 0; width: 4vw; height: 4vw; background-color: red;" onclick="console.log('close this window')">닫기버튼</div>
+       <!-- <div id="btn-close" style="position:absolute; z-index:100;  width: 4vw; height: 4vw; background-color: blue;" onclick="console.log('yes!')">백로그 버튼</div>
+        <div id="back-log-area" style="position: absolute; z-index: 200; width: 100%; height: 100%; overflow-y: scroll; background-color: rgba(0, 0, 0, 0.7);">
+            <div id="btn-close-log"></div>
+            <div class="log-entity"></div>
+            <div class="log-entity"></div>
+            <div class="log-entity"></div>
+            <div class="log-entity"></div>
+            <div class="log-entity"></div>-->
         </div>
-    </div>
     </div>
 
     <script type="text/javascript" src="/kowork.js"></script>

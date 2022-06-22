@@ -1,3 +1,4 @@
+
 /////////////////////////Base Class Area//////////////////////////////
 class Character {
     constructor(_name, _text, _color) {
@@ -546,15 +547,16 @@ function debugPrinter(text) {
     log.innerHTML = text;
     //  consoleRoot.appendChild(log);
 }
-
-document.addEventListener('keyup', event => {
-    if (event.code === 'Space') {
-        if (Memory.task.size != 0) {
-            taskManager.skipTasks();
-            return;
-        }
-        blockNext = false;
+document.getElementById('execute-area').onclick(event=>{
+    console.log('사용자 컨티뉴');
+    if (Memory.task.size != 0) {
+        taskManager.skipTasks();
+        return;
     }
+    blockNext = false;
+});
+document.addEventListener('keyup', event => {
+    
     if (event.code == 'D') {
         dumpMemory();
     }
