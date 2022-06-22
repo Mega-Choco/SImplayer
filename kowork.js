@@ -547,16 +547,15 @@ function debugPrinter(text) {
     log.innerHTML = text;
     //  consoleRoot.appendChild(log);
 }
-document.getElementById('execute-area').onclick(event=>{
-    console.log('사용자 컨티뉴');
-    if (Memory.task.size != 0) {
-        taskManager.skipTasks();
-        return;
-    }
-    blockNext = false;
-});
+
 document.addEventListener('keyup', event => {
-    
+    if (event.code === 'Space') {
+        if (Memory.task.size != 0) {
+            taskManager.skipTasks();
+            return;
+        }
+        blockNext = false;
+    }
     if (event.code == 'D') {
         dumpMemory();
     }
@@ -565,11 +564,6 @@ document.addEventListener('keyup', event => {
         option.debugPrinter = !option.debugPrinter;
     }
 })
-
-document.addEventListener("touchstart", event => {
-
-}, true);
-
 
 function dumpMemory() {
     var dump = Memory;
