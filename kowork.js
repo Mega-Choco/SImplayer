@@ -193,10 +193,23 @@ let option = {
     FPS: 60, //게임 프레임 (60이하)
     width: 720, //기준 스크린 폭(px)
     height: 1280, // 기준 스크린 높이(px)
-    fontSize: 38,//텍스트 폰트 사이즈
     nameSize: 24,//이름표시 폰트사이즈
     canvasDebug: false,//오브젝트 이미지 영역 표시여부(디버깅용)
-    dialogueSpeed: 0.055
+    dialogueSpeed: 0.055,//.s
+    dialogueSettings: {//대화 텍스트 옵션
+        font: {
+            name: 'sans-serif', //폰트 이름
+            url: null // 폰트 소스 주소
+        },
+        size: 18
+    },
+    nameSettings: {//이름 텍스트 옵션
+        font: {
+            name: 'sans-serif', //폰트 이름
+            url: null // 폰트 소스 주소
+        },
+        size: 18
+    }
 };
 
 
@@ -237,13 +250,21 @@ let fps, fpsInterval, startTime, now, then, elapsed
 let deltaNow, deltaPrev;
 let originScript = null;
 let blockNext = false;
-let fontSetting = {
-    currentSize: 0,
+
+
+let dialogueTextSetting = {
+    originSettings: 0,
+    currentFontSize: 0,
     fontInfo: "",
     lineHeight: 0
-};
+}
 
-
+let nameTextSetting = {
+    originSettings: 0,
+    currentFontSize: 0,
+    fontInfo: "",
+    lineHeight: 0
+}
 let ctcIcon = null;
 let textBoxImage = null;
 
@@ -264,6 +285,14 @@ function play(sourceUrl) {
     init();
 }
 
+function excuteNext() {
+    if (Memory.task.size != 0) {
+        taskManager.skipTasks();
+        return;
+    }
+    blockNext = false;
+}
+
 function init() {
     fps = option.FPS;
     fpsInterval = 1000 / fps;
@@ -272,12 +301,18 @@ function init() {
     consoleRoot = document.getElementById('console');
     ctx = $canvas.getContext("2d");
     ctx.font = "";
-    $canvas.onclick = () => {
-        if (Memory.task.size != 0) {
-            taskManager.skipTasks();
-            return;
-        }
-        blockNext = false;
+    document.getElementById("execute-area").onclick = () => {
+        console.log("다음으로");
+        excuteNext();
+
+    };
+    dialogueTextSetting.originSettings = option.dialogueSettings;
+    nameTextSetting.originSettings = option.nameSettings;
+    window.onresize = function () {
+        clearTimeout(resizeGame());
+        doit = setTimeout(function () {
+            resizeGame();
+        }, 100);
     };
     resizeGame();
     translateScript(originScript);
@@ -286,6 +321,7 @@ function init() {
 
 async function start() {
     await settingEngineResource();
+
     await preDefines();
     excuteCodeLines();
     console.log(fpsInterval);
@@ -304,7 +340,6 @@ function loop() {
     var prev = Date.now();
     if (elapsed >= fpsInterval) {
         then = now - (elapsed % fpsInterval);
-
         var sinceStart = now - startTime;
         var delta = (now - deltaPrev) / 1000;
         deltaPrev = now;
@@ -389,23 +424,25 @@ function draw() {
     var dialogueAreaPos_x = (textBoxPos_x + textBoxSetting.padding.left)
     var dialogueAreaPos_y = (textBoxPos_y + textBoxSetting.padding.top)
 
+    ctx.font = nameTextSetting.fontInfo;
     if (textHandler.speaker != null) {
         ctx.fillStyle = textHandler.speaker.color;
+
         //Drawing Name on Textbox area
         ctx.fillText(textHandler.speaker.text,
             (textBoxPos_x + textBoxSetting.name_xPos) * currentCanvasScale.x,
-            ((textBoxPos_y + textBoxSetting.name_yPos) * currentCanvasScale.y) + fontSetting.currentSize);
+            ((textBoxPos_y + textBoxSetting.name_yPos) * currentCanvasScale.y) + nameTextSetting.currentSize);
 
     }
 
     ctx.fillStyle = 'black';
     //Drawing Dialogue text
-    ctx.font = fontSetting.fontInfo;
+    ctx.font = dialogueTextSetting.fontInfo;
     textHandler.wrapText(textHandler.currentText,
         dialogueAreaPos_x * currentCanvasScale.x,
-        ((dialogueAreaPos_y) * currentCanvasScale.y) + fontSetting.currentSize,
+        ((dialogueAreaPos_y) * currentCanvasScale.y) + dialogueTextSetting.currentSize,
         (textBoxSetting.width - textBoxSetting.padding.left - textBoxSetting.padding.right) * currentCanvasScale.x,
-        fontSetting.lineHeight
+        dialogueTextSetting.lineHeight
     );
 
 
@@ -433,7 +470,9 @@ async function settingEngineResource() {
     if (textBoxSetting.boxImageUrl != null) {
         await loadingImage(textBoxSetting.boxImageUrl).then(img => textBoxImage = img);
     }
-    return;
+
+    loadFont(option.dialogueSettings.font.name, option.dialogueSettings.font.url);
+    loadFont(option.nameSettings.font.name, option.nameSettings.font.url);
 }
 
 //////////////// Resizing canvas //////////////////
@@ -445,12 +484,16 @@ var calculateAspectRatioFit = function (srcWidth, srcHeight, maxWidth, maxHeight
     };
 };
 
-function calculateFontSize() {
-    var ratio = option.fontSize / option.width;   // calc ratio
+function calculateFontSize(currentSetting) {
+    var ratio = currentSetting.originSettings.size / option.width;   // calc ratio
     var size = $canvas.width * ratio;
-    fontSetting.currentSize = (size | 0);   // get font size based on current width
-    fontSetting.lineHeight = ((option.fontSize + textBoxSetting.lineHeight) / option.width) * $canvas.width;
-    fontSetting.fontInfo = fontSetting.currentSize + 'px NanumBarunGothic'; // set font
+    var result = {};
+    result.currentSize = (size | 0);   // get font size based on current width
+    result.lineHeight = ((currentSetting.originSettings.size + textBoxSetting.lineHeight) / option.width) * $canvas.width;
+    result.fontInfo = `${result.currentSize}px  ${currentSetting.originSettings.font.name}`; // set font
+    result.originSettings = currentSetting.originSettings;
+
+    return result;
 }
 
 function gcd(a, b) {
@@ -490,7 +533,8 @@ function resizeGame() {
     $systemOverlay.style.left = pos.x;
     $systemOverlay.style.top = pos.y
 
-    calculateFontSize();
+    dialogueTextSetting = calculateFontSize(dialogueTextSetting);
+    nameTextSetting = calculateFontSize(nameTextSetting);
 }
 
 function getPosition(element) {
@@ -508,12 +552,7 @@ function initializeCanvasSize() {
     baseAspectRatio = option.width / option.height;
 }
 
-window.onresize = function () {
-    clearTimeout(resizeGame());
-    doit = setTimeout(function () {
-        resizeGame();
-    }, 100);
-};
+
 
 function convertPercentagePosition(_x, _y) {
     if (CheckPercentageNumber(_x)) {
@@ -549,13 +588,7 @@ function debugPrinter(text) {
 }
 
 document.addEventListener('keyup', event => {
-    if (event.code === 'Space') {
-        if (Memory.task.size != 0) {
-            taskManager.skipTasks();
-            return;
-        }
-        blockNext = false;
-    }
+
     if (event.code == 'D') {
         dumpMemory();
     }
@@ -632,6 +665,18 @@ async function loadingImage(src) {
         img.src = src;
     });
 }
+
+function loadFont(name, url) {
+    let font = new FontFace(`${name}`, `url("${url}")`);
+    font.load().then(function (loadedFont) {
+        document.fonts.add(loadedFont);
+        //do something after the font is loaded
+    }).catch(function (error) {
+        console.log("폰트 로딩 실패");
+    });
+}
+
+
 
 function print(name, text, cycleTime) {
     var speaker = Memory.characters.get(name);
