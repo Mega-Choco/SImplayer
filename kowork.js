@@ -195,7 +195,7 @@ let option = {
     height: 1280, // 기준 스크린 높이(px)
     nameSize: 24,//이름표시 폰트사이즈
     canvasDebug: false,//오브젝트 이미지 영역 표시여부(디버깅용)
-    dialogueSpeed: 0.055,//.s
+    dialogueSpeed: 0.035,//.s
     dialogueSettings: {//대화 텍스트 옵션
         font: {
             name: 'sans-serif', //폰트 이름
