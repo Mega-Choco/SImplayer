@@ -15,8 +15,8 @@
         <div id="execute-area" style="z-index: 10; position: absolute; width:100%;height:100%;"
             onclick="console.log('continue')"></div>
         <div id="btn-close"
-            style="position:absolute; z-index:100; right: 0; width: 4vw; height: 4vw; background-color: red;"
-            onclick="console.log('close this window')">닫기버튼</div>
+            style="position:absolute; z-index:100; right: 0; background-color: red;"
+           ></div>
         <!-- <div id="btn-close" style="position:absolute; z-index:100;  width: 4vw; height: 4vw; background-color: blue;" onclick="console.log('yes!')">백로그 버튼</div>
         <div id="back-log-area" style="position: absolute; z-index: 200; width: 100%; height: 100%; overflow-y: scroll; background-color: rgba(0, 0, 0, 0.7);">
             <div id="btn-close-log"></div>
@@ -40,6 +40,8 @@
 
         option.dialogueSettings.font.name = 'Nanum Gothic';
         option.dialogueSettings.font.url = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/EhIErf9VHvmXynQjchNAbw-NanumBarunGothic.ttf'
+        option.dialogueSettings.color= 'white'
+        option.ui.closeButton.url = 'https://cdn.icon-icons.com/icons2/1674/PNG/512/close_111152.png'
 
         textBoxSetting.lineHeight = 15;
         textBoxSetting.width = 1280;
@@ -47,7 +49,7 @@
         textBoxSetting.margin.bottom = 0;
         //textBoxSetting.ctcIconUrl = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/VFJ1Rq_kBVedT6lSoqkIug-%EB%82%A8%EA%B6%81%EC%9E%90%EB%9D%BC_%EA%B8%B0%EB%B3%B8.png'
         textBoxSetting.ctcIconUrl = null;
-        textBoxSetting.boxImageUrl = "/imgs/box_frame.png"
-        play("/scripts/16_9_demo.txt");
+ 
+        play("/scripts/turtle_demo.txt");
     </script>
 </body>

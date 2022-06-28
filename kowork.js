@@ -1,4 +1,3 @@
-
 /////////////////////////Base Class Area//////////////////////////////
 class Character {
     constructor(_name, _text, _color) {
@@ -137,7 +136,8 @@ const CommandList = new Map([
     ['bg', setBackground],
     ['bounce', bounceObject],
     ['shake', shakeObject],
-    ['set_pos', setObjectPosition]
+    ['set_pos', setObjectPosition],
+    ['exit',window.close]
 ]);
 
 let scriptHandler = {
@@ -201,7 +201,8 @@ let option = {
             name: 'sans-serif', //폰트 이름
             url: null // 폰트 소스 주소
         },
-        size: 18
+        size: 18,
+        color: 'black'
     },
     nameSettings: {//이름 텍스트 옵션
         font: {
@@ -209,6 +210,13 @@ let option = {
             url: null // 폰트 소스 주소
         },
         size: 18
+    },
+    ui:{
+        closeButton:{
+            width:55,
+            height:55,
+            url:null
+        }
     }
 };
 
@@ -227,7 +235,7 @@ let textBoxSetting = {
         bottom: 20  //px
     },
     margin: {
-        bottom: 10   //px
+        bottom: 0   //px
     },
     ctcIconUrl: null,
     ctcIconPos: {
@@ -245,6 +253,7 @@ let $canvas = document.getElementById("canvas");
 let $container = document.getElementsByClassName('container');
 let $systemOverlay = document.getElementById("system-overlay");
 let consoleRoot = document.getElementById('console');
+let $closeBtn = document.getElementById('btn-close');
 let ctx;
 let fps, fpsInterval, startTime, now, then, elapsed
 let deltaNow, deltaPrev;
@@ -304,8 +313,13 @@ function init() {
     document.getElementById("execute-area").onclick = () => {
         console.log("다음으로");
         excuteNext();
-
     };
+    $closeBtn.onclick = () =>{
+        console.log('close this window');
+        window.close();
+        window.RealWorld.closePage();
+        
+    }
     dialogueTextSetting.originSettings = option.dialogueSettings;
     nameTextSetting.originSettings = option.nameSettings;
     window.onresize = function () {
@@ -315,13 +329,13 @@ function init() {
         }, 100);
     };
     resizeGame();
-    translateScript(originScript);
     start();
 }
 
 async function start() {
     await settingEngineResource();
-
+    
+    translateScript(originScript);
     await preDefines();
     excuteCodeLines();
     console.log(fpsInterval);
@@ -435,7 +449,7 @@ function draw() {
 
     }
 
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = option.dialogueSettings.color;
     //Drawing Dialogue text
     ctx.font = dialogueTextSetting.fontInfo;
     textHandler.wrapText(textHandler.currentText,
@@ -469,6 +483,10 @@ async function settingEngineResource() {
     }
     if (textBoxSetting.boxImageUrl != null) {
         await loadingImage(textBoxSetting.boxImageUrl).then(img => textBoxImage = img);
+    }
+    if(option.ui.closeButton.url != null){
+        console.log("로드");
+        await loadingImage(option.ui.closeButton.url).then(img=>$closeBtn.style.backgroundImage = img);
     }
 
     loadFont(option.dialogueSettings.font.name, option.dialogueSettings.font.url);
@@ -533,6 +551,9 @@ function resizeGame() {
     $systemOverlay.style.left = pos.x;
     $systemOverlay.style.top = pos.y
 
+    $closeBtn.style.width = option.ui.closeButton.width * currentCanvasScale.x;
+    $closeBtn.style.height = option.ui.closeButton.height * currentCanvasScale.y;
+
     dialogueTextSetting = calculateFontSize(dialogueTextSetting);
     nameTextSetting = calculateFontSize(nameTextSetting);
 }
@@ -551,8 +572,6 @@ function initializeCanvasSize() {
     $canvas.height = option.height;
     baseAspectRatio = option.width / option.height;
 }
-
-
 
 function convertPercentagePosition(_x, _y) {
     if (CheckPercentageNumber(_x)) {
@@ -576,9 +595,6 @@ function settingTextbox(y_pos, padding_x, padding_y) {
         textBox.padding_y = (textBox.height / 100) * 5
 }
 
-function initializeScreen() {
-
-}
 ///////////////////////DebugTool Area//////////////////////////////
 
 function debugPrinter(text) {
@@ -588,7 +604,6 @@ function debugPrinter(text) {
 }
 
 document.addEventListener('keyup', event => {
-
     if (event.code == 'D') {
         dumpMemory();
     }
@@ -675,8 +690,6 @@ function loadFont(name, url) {
         console.log("폰트 로딩 실패");
     });
 }
-
-
 
 function print(name, text, cycleTime) {
     var speaker = Memory.characters.get(name);
@@ -1108,7 +1121,7 @@ function translateScript(originCode) {
             var parameterSet = paramRegex.exec(eachLine)[1];
             let parameters = parameterSet.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g);
             var command = eachLine.replace(paramRegex, "");
-            var trimedParameters = parameters => parameters.map(element => { if (element == null || element == 'null') { return null; } element = element.trim(); if (element === "") { return null; } return element });
+            var trimedParameters = parameters => parameters.map(element => { if (element == null || element == 'null'||element == "null") { return null; } element = element.trim(); if (element === "") { return null; } return element });
             var codeLineObj = new Command(command.trim().toLowerCase(), trimedParameters(parameters));
             if (defineCommandList.has(codeLineObj.command)) {
                 defines.push(codeLineObj);

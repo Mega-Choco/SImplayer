@@ -21,56 +21,38 @@ body {
 }
 
 #system-overlay {
-    z-index:10; position: relative;
+    z-index: 10;
+    position: relative;
 }
 
-#btn-close-log{
+#execute-area {
+    z-index: 10;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#btn-close {
+    position: absolute;
+    z-index: 100;
+    right: 0;
+    background-color: red;
+}
+#btn-close:hover{
+    cursor: pointer;
+}
+#btn-close-log {
     width: 50px;
     height: 50px;
     background-color: aqua;
     position: absolute;
     right: 0;
 }
-.log-entity{
+
+.log-entity {
     width: 100%;
     height: 200px;
     z-index: inherit;
     background-color: plum;
     margin-bottom: 10px;
-}
-.close {
-    position: absolute;
-    width: 3vw;
-    height: 3vw;
-    opacity: 0.3;
-    z-index: 40;
-}
-
-.close:hover {
-    opacity: 1;
-}
-
-.close:before,
-.close:after {
-    position: absolute;
-    content: ' ';
-    height: 33px;
-    width: 2px;
-    background-color: #333;
-}
-
-.close:before {
-    transform: rotate(45deg);
-}
-
-.close:after {
-    transform: rotate(-45deg);
-}
-
-@font-face {
-    font-family: 'NanumBarunGothic';
-    font-style: normal;
-    font-weight: 400;
-    src: url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.eot');
-    src: url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.eot?#iefix') format('embedded-opentype'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.woff') format('woff'), url('//cdn.jsdelivr.net/font-nanumlight/1.0/NanumBarunGothicWeb.ttf') format('truetype');
 }
