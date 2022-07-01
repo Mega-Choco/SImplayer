@@ -235,7 +235,7 @@ let textBoxSetting = {
         bottom: 20  //px
     },
     margin: {
-        bottom: 0   //px
+        bottom: 20   //px
     },
     ctcIconUrl: null,
     ctcIconPos: {

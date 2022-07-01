@@ -36,11 +36,25 @@ body {
     position: absolute;
     z-index: 100;
     right: 0;
-    background-color: red;
+    text-align: center;
 }
 #btn-close:hover{
     cursor: pointer;
 }
+#btn-close:before, #btn-close:after {
+    position: absolute;
+    content: ' ';
+    height: 100%;
+    width: 3%;
+    background-color: red;
+  }
+  #btn-close:before {
+    transform: rotate(45deg);
+  }
+  #btn-close:after {
+    transform: rotate(-45deg);
+  }
+  
 #btn-close-log {
     width: 50px;
     height: 50px;
