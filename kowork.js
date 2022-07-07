@@ -193,7 +193,6 @@ let option = {
     FPS: 60, //게임 프레임 (60이하)
     width: 720, //기준 스크린 폭(px)
     height: 1280, // 기준 스크린 높이(px)
-    nameSize: 24,//이름표시 폰트사이즈
     canvasDebug: false,//오브젝트 이미지 영역 표시여부(디버깅용)
     dialogueSpeed: 0.035,//.s
     dialogueSettings: {//대화 텍스트 옵션
@@ -662,7 +661,7 @@ taskManager.disposeTask = function (id) {
 ///////////////////////Commands Area/////////////////////////
 
 function defineCharacter(name, text, personalColor) {
-    Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? name : text), personalColor));
+    Memory.characters.set(name.replace(" ", ""), new Character(name, (text == null ? "" : text), personalColor));
 }
 
 async function defineImage(name, sourceUrl) {
