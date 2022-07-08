@@ -1,31 +1,42 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" />
+    <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
+
 <body>
     <div id="container">
         <canvas id="canvas">
         </canvas>
     </div>
     <div id="system-overlay">
-        <div id="execute-area"></div>
-        <div id="btn-close"></div>
+        <div id="system-overlay">
+            <div id="execute-area"></div>
+            <div id="btn-close"></div>
+        </div>
     </div>
+
     <script type="text/javascript" src="/kowork.js"></script>
-    <script src="https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/Xk0ly8JxNLtj1Jx45jVcnw-rw_extends.js"></script>
     <script type="text/javascript">
         option.FPS = 60;
-        option.width = 720;
-        option.height = 1280;
-        textBoxSetting.lineHeight = 22;
-        textBoxSetting.margin.bottom = 20;
+        option.width = 1280;
+        option.height = 720;
         option.nameSettings.font.name = 'Black Han Sans';
         option.nameSettings.font.url = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/JLrAdYxLmujplBJFohLGTA-MochiyPopOne_Regular.ttf';
         option.nameSettings.size = 32;
+
         option.dialogueSettings.font.name = 'Nanum Gothic';
         option.dialogueSettings.font.url = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/EhIErf9VHvmXynQjchNAbw-NanumBarunGothic.ttf'
         option.dialogueSettings.color= 'white'
-        option.dialogueSettings.size = 28;
-        play("scripts/jellyMaster_net.txt");
+        option.ui.closeButton.url = 'https://cdn.icon-icons.com/icons2/1674/PNG/512/close_111152.png'
+
+        textBoxSetting.lineHeight = 15;
+        textBoxSetting.width = 1280;
+        textBoxSetting.height = 209;
+        textBoxSetting.margin.bottom = 0;
+        //textBoxSetting.ctcIconUrl = 'https://realworld.blob.core.windows.net/project-files/ugUrxYTmUERV4_4EJjdUBw/VFJ1Rq_kBVedT6lSoqkIug-%EB%82%A8%EA%B6%81%EC%9E%90%EB%9D%BC_%EA%B8%B0%EB%B3%B8.png'
+        textBoxSetting.ctcIconUrl = null;
+ 
+        play("/scripts/turtle_demo.txt");
     </script>
 </body>
