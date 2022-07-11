@@ -398,13 +398,13 @@ function draw() {
             var fixedHeight = element.height * element.scale.y;
             var fixedX = ((flipedPosition.x) - (fixedWidth / 2));
             var fixedY = ((flipedPosition.y) - (fixedHeight / 2));
-
+            //Math.floor대신... 
             ctx.drawImage(
                 element.image,
-                fixedX * currentCanvasScale.x,
-                fixedY * currentCanvasScale.y,
-                fixedWidth * currentCanvasScale.x,
-                fixedHeight * currentCanvasScale.y
+                ~~(fixedX * currentCanvasScale.x),
+                ~~(fixedY * currentCanvasScale.y),
+                ~~(fixedWidth * currentCanvasScale.x),
+                ~~(fixedHeight * currentCanvasScale.y)
             );
 
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -429,12 +429,11 @@ function draw() {
     else {
         ctx.fillStyle = 'rgba(0,0,0,.95)'
         ctx.fillRect(
-            textBoxPos_x * currentCanvasScale.x,
-            textBoxPos_y * currentCanvasScale.y,
+            ~~(textBoxPos_x * currentCanvasScale.x),
+            ~~(textBoxPos_y * currentCanvasScale.y),
             textBoxSetting.width * currentCanvasScale.x,
             textBoxSetting.height * currentCanvasScale.y
         );
-
     }
 
     //Drawing Dialogue Area
