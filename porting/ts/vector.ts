@@ -8,7 +8,7 @@ export class Vector2 {
     }
 }
 
-export const Math = {
+export const VMath = {
 
     //두 Vector2의 덧셈 입니다.
     AddVector2(v1: Vector2, v2: Vector2) {

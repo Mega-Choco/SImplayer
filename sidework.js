@@ -350,7 +350,7 @@ async function start() {
 }
 
 function loop() {
-    requestAnimationFrame(loop);
+    requestAnimationFrame(()=>this.loop());
     now = Date.now();
     elapsed = now - then;
 
