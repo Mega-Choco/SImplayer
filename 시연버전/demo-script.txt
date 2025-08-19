@@ -1,0 +1,51 @@
+IMG (하리보,https://cdn.realworld.to/project-files/ugUrxYTmUERV4_4EJjdUBw/L4uFb925shoHRK7ASXT8oQ-%ED%95%98%EB%A6%AC%EB%B3%B4.png)
+IMG (c_wink, https://cdn.realworld.to/project-files/ugUrxYTmUERV4_4EJjdUBw/SbkqAaYrXU12MesV6zviyw-c_1.png)
+IMG (c_smile, https://cdn.realworld.to/project-files/ugUrxYTmUERV4_4EJjdUBw/tFHKtmU_X6OZCEriJo2mVA-c_2.png)
+IMG (c_nor, https://cdn.realworld.to/project-files/ugUrxYTmUERV4_4EJjdUBw/YxdTWpje8B50e7GbQ5_EjQ-c_4.png)
+IMG (bg_living, https://cdn.realworld.to/project-files/ugUrxYTmUERV4_4EJjdUBw/97kBV1ApRz3v_Ry6Kt6dag-living_room.png)
+CHAR (system,,#FFFFFF)
+CHAR (chan, 정체불명한 누군가,#A44CD3)
+
+BG (bg_living)
+PRINT (system,"여긴 정체불명의 방")
+
+PRINT (system,"당신은 여기가 어디인지\n 그리고 어떻게 들어오게된건지 전혀 모른다.")
+
+SHOW (port_c, c_nor, 50%,70%,1)
+SCALE (port_c, 1.3,1.3)
+FADE (port_c,0,1,0.3)
+PRINT (chan,"정체불명의 방에 오신걸 환영합니다.")
+
+PRINT (system, "정체불명한 공간에 어울리는 정체불명한 사람이다.")
+
+SHOW (port_c,c_wink)
+PRINT (chan, "[정체불명의 방]에 오신 30번째 방문자세요~!\n저희는 10의 배수번째 방문자분들에게 특별한 선물을 증정하고 있습니다.")
+
+SHOW (haribo,하리보,50%,50%,2)
+SCALE (haribo, 0.5,0.5)
+FADE (haribo,0,1,0.4)
+MOVE (port_c, 20%, , 0.2)
+PRINT (chan, "상품은 하리보 골드베렌 5개 입니다~♪")
+
+BOUNCE (port_c,-35, 8, 1)
+SHOW (port_c,c_smile)
+PRINT (chan, "축하드려요~")
+
+PRINT (system, "당신은 하리보 5개를 받았다.\n5봉이 아니라 낱개로 5개다.\n 하지만 모두 파인애플맛이다.")
+
+PRINT (system, "당신의 손에는 5개의 하리보가 쥐여졌다.")
+
+DISPOSE (haribo)
+MOVE (port_c,50%,null,0.2)
+
+SHOW (port_c,c_wink)
+PRINT (chan, "좋아하는 맛으로 받은것 같나요?")
+
+SHOW (port_c,c_nor)
+PRINT (chan, "재고가 몇개 없어서 5개 밖에 못드리네요...")
+
+PRINT (chan,"그럼 이만...")
+
+*리얼월드용 확장 커맨드*
+RW_SUBMIT (jelly)
+RW_CLOSE ()
